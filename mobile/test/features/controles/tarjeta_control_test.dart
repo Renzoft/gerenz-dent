@@ -6,6 +6,8 @@ import 'package:gerenz_dent/core/theme/app_theme.dart';
 import 'package:gerenz_dent/features/controles/data/controles_repository.dart';
 import 'package:gerenz_dent/features/controles/domain/control.dart';
 import 'package:gerenz_dent/features/controles/presentation/tarjeta_control.dart';
+import 'package:gerenz_dent/features/cuenta/data/cuenta_repository.dart';
+import 'package:gerenz_dent/features/cuenta/domain/cuenta.dart';
 import 'package:gerenz_dent/features/tratamientos/data/tratamientos_repository.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
@@ -15,6 +17,7 @@ import '../../helpers/fakes.dart';
 void main() {
   late ControlesRepositoryFalso controles;
   late TratamientosRepositoryFalso tratamientos;
+  late CuentaRepositoryFalso cuenta;
 
   setUpAll(() async {
     await initializeDateFormatting('es_PE');
@@ -24,6 +27,14 @@ void main() {
   setUp(() {
     controles = ControlesRepositoryFalso();
     tratamientos = TratamientosRepositoryFalso();
+    cuenta = CuentaRepositoryFalso();
+    // Por defecto el tratamiento ya está pagado: no se pregunta por el pago.
+    when(() => cuenta.cuenta(any())).thenAnswer(
+      (_) async => CuentaPaciente(
+        deuda: 0,
+        planes: [planCuentaPrueba(cargos: 500, pagos: 500)],
+      ),
+    );
     when(
       () => tratamientos.listar(),
     ).thenAnswer((_) async => [bracketsPrueba, puentePrueba]);
@@ -38,6 +49,7 @@ void main() {
         overrides: [
           controlesRepositoryProvider.overrideWithValue(controles),
           tratamientosRepositoryProvider.overrideWithValue(tratamientos),
+          cuentaRepositoryProvider.overrideWithValue(cuenta),
         ],
         child: MaterialApp(
           theme: AppTheme.claro,
@@ -132,5 +144,53 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     verifyNever(() => controles.cambiarEstado(any(), any()));
+  });
+
+  testWidgets('"Asistió" con deuda ofrece registrar el pago', (tester) async {
+    registerFallbackValue(MedioPago.efectivo);
+    when(() => cuenta.cuenta(any())).thenAnswer(
+      (_) async => CuentaPaciente(
+        deuda: 600,
+        planes: [planCuentaPrueba(cargos: 600, pagos: 0)],
+      ),
+    );
+    when(
+      () => cuenta.registrarPago(
+        any(),
+        monto: any(named: 'monto'),
+        medio: any(named: 'medio'),
+        nota: any(named: 'nota'),
+      ),
+    ).thenAnswer((_) async => planCuentaPrueba(cargos: 600, pagos: 100));
+    when(
+      () => controles.cambiarEstado('c-1', EstadoControl.asistio),
+    ).thenAnswer(
+      (_) async =>
+          CambioDeEstado(control: controlPrueba(estado: EstadoControl.asistio)),
+    );
+    await montar(tester, controlPrueba(planId: 'pl-1'));
+
+    await tester.tap(find.text('Asistió'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('¿Pagó algo hoy?'), findsOneWidget);
+    expect(find.text('Brackets (ortodoncia): debe S/ 600.00.'), findsOneWidget);
+    await tester.tap(find.text('Registrar pago'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '100');
+    await tester.tap(find.text('Plin'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Registrar pago'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => cuenta.registrarPago(
+        'pl-1',
+        monto: 100,
+        medio: MedioPago.plin,
+        nota: any(named: 'nota'),
+      ),
+    ).called(1);
+    // Luego sigue el flujo normal (sin fecha sugerida, termina aquí).
+    expect(find.text('Asistencia registrada'), findsOneWidget);
   });
 }

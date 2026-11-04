@@ -27,10 +27,20 @@ public final class ControlDtos {
       @Size(max = Control.NOTA_MAX, message = "Máximo 140 caracteres") String nota,
       @Min(value = 1, message = "Mínimo 1 pieza")
           @Max(value = PlanTratamiento.PIEZAS_MAX, message = "Máximo 32 piezas")
-          Integer piezas) {
+          Integer piezas,
+      @jakarta.validation.constraints.DecimalMin(
+              value = "0.00",
+              message = "El costo no puede ser negativo")
+          java.math.BigDecimal costo,
+      @jakarta.validation.constraints.DecimalMin(
+              value = "0.01",
+              message = "El pago debe ser mayor a 0")
+          java.math.BigDecimal pagoInicial,
+      String medioPago) {
 
     NuevoControl aComando() {
-      return new NuevoControl(pacienteId, tratamientoId, fecha, hora, nota, piezas);
+      return new NuevoControl(
+          pacienteId, tratamientoId, fecha, hora, nota, piezas, costo, pagoInicial, medioPago);
     }
   }
 

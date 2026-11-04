@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../cuenta/application/cuenta_providers.dart';
 import '../data/controles_repository.dart';
 import '../domain/control.dart';
 
@@ -24,8 +25,13 @@ final vencidosProvider = FutureProvider.autoDispose<List<Control>>(
 );
 
 /// Recarga todo lo que muestra controles después de un cambio.
+/// Agendar y marcar "asistió" generan cargos: también se recarga la cuenta.
 void refrescarControles(WidgetRef ref, [String? pacienteId]) {
   ref.invalidate(agendaSemanaProvider);
   ref.invalidate(vencidosProvider);
-  if (pacienteId != null) ref.invalidate(historialPacienteProvider(pacienteId));
+  ref.invalidate(deudasProvider);
+  if (pacienteId != null) {
+    ref.invalidate(historialPacienteProvider(pacienteId));
+    ref.invalidate(cuentaPacienteProvider(pacienteId));
+  }
 }

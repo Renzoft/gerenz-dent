@@ -7,6 +7,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/estados.dart';
 import '../../controles/application/controles_providers.dart';
+import '../../cuenta/presentation/seccion_cuenta.dart';
 import '../../controles/presentation/agendar_control_sheet.dart';
 import '../../controles/presentation/tarjeta_control.dart';
 import '../application/pacientes_providers.dart';
@@ -14,8 +15,7 @@ import '../data/pacientes_repository.dart';
 import '../domain/formato_whatsapp.dart';
 import '../domain/paciente.dart';
 
-/// Ficha del paciente (HU-05): datos, próximo control e historial.
-/// La deuda se agrega en la iteración 4.
+/// Ficha del paciente (HU-05): datos, próximo control, historial y deuda.
 class PacienteDetallePage extends ConsumerStatefulWidget {
   const PacienteDetallePage({
     super.key,
@@ -181,6 +181,8 @@ class _FichaState extends ConsumerState<_Ficha> {
         const SizedBox(height: 24),
         _SeccionControles(paciente: p),
         const SizedBox(height: 24),
+        SeccionCuenta(pacienteId: p.id),
+        const SizedBox(height: 16),
         Text('Datos', style: textos.titleMedium),
         const SizedBox(height: 8),
         Card(

@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/formato/fechas.dart';
+import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/estados.dart';
+import '../../cuenta/data/cuenta_repository.dart';
+import '../../cuenta/domain/cuenta.dart';
+import '../../cuenta/presentation/registrar_pago_sheet.dart';
 import '../application/controles_providers.dart';
 import '../data/controles_repository.dart';
 import '../domain/control.dart';
@@ -66,6 +70,8 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
   /// HU-12: al marcar "Asistió" se ofrece agendar el siguiente control con la
   /// fecha sugerida por el tratamiento (brackets → +1 mes).
   Future<void> _proponerSiguiente(DateTime? sugerida) async {
+    await _ofrecerPago();
+    if (!mounted) return;
     if (sugerida == null) {
       mostrarMensaje(context, 'Asistencia registrada');
       return;
@@ -85,6 +91,39 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
       tratamientoId: _c.tratamientoId,
       fechaSugerida: sugerida,
     );
+  }
+
+  /// Tras "Asistió" (y la cuota de brackets, si aplica) se ofrece registrar
+  /// lo que pagó el paciente (HU-22). Si el tratamiento no tiene deuda, no
+  /// pregunta.
+  Future<void> _ofrecerPago() async {
+    final planId = _c.planId;
+    if (planId == null) return;
+    final CuentaPlan? plan;
+    try {
+      final cuenta = await ref
+          .read(cuentaRepositoryProvider)
+          .cuenta(_c.pacienteId);
+      plan = cuenta.planes.where((p) => p.planId == planId).firstOrNull;
+    } on ApiError {
+      return; // sin conexión: se puede registrar luego desde la ficha
+    }
+    if (plan == null || !plan.debe || !mounted) return;
+    final pagar = await confirmar(
+      context,
+      titulo: '¿Pagó algo hoy?',
+      mensaje:
+          '${plan.tratamientoNombre}: debe ${Moneda.formatear(plan.saldo)}.',
+      accion: 'Registrar pago',
+    );
+    if (!pagar || !mounted) return;
+    final ok = await mostrarRegistrarPago(
+      context,
+      planId: plan.planId,
+      tratamiento: plan.tratamientoNombre,
+      saldo: plan.saldo,
+    );
+    if (ok && mounted) mostrarMensaje(context, 'Pago registrado');
   }
 
   Future<void> _reprogramar() async {

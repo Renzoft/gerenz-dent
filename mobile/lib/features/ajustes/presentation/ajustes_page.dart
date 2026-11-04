@@ -144,7 +144,7 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('GERENZ DENT'),
-            subtitle: Text('Versión 0.4.1 · ${Env.apiUrl}'),
+            subtitle: Text('Versión 0.5.0 · ${Env.apiUrl}'),
           ),
         ],
       ),

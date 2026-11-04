@@ -186,6 +186,16 @@ GerenzDent/
 - **Bloqueo:** 5 intentos fallidos → 15 min (HTTP 429 con `Retry-After`). Mismo mensaje para correo
   inexistente o clave errada.
 
+### ADR-007 · Eventos de dominio entre módulos (iteración 4)
+- **Decisión:** el módulo de controles publica `PlanCreado` y `ControlAsistido` (Spring
+  `ApplicationEventPublisher`); el módulo `cuenta` los escucha y genera los cargos (precio fijo, por pieza,
+  inicial y cuota mensual de brackets).
+- **Motivo:** controles no conoce nada de dinero; mañana otros módulos (estadísticas, recordatorio de
+  control preventivo) pueden reaccionar a los mismos eventos sin tocarlo.
+- **Consecuencia:** los oyentes corren en la misma transacción; si generar el cargo falla (p. ej. un pago
+  inicial mayor al costo), no se guarda ni el control: todo o nada.
+- **Datos existentes:** la migración V7 crea los cargos de los planes anteriores con el precio del catálogo.
+
 ### ADR-005 · Online-first
 - **Decisión:** sin base de datos local en el MVP; solo caché en memoria.
 - **Motivo:** hay internet en el consultorio; evita la complejidad de sincronización. Revisable si aparece la necesidad.
