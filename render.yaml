@@ -13,7 +13,7 @@ services:
     autoDeployTrigger: checksPass   # despliega solo si el CI de GitHub pasó
     healthCheckPath: /actuator/health
     envVars:
-      - key: DB_URL               # jdbc:postgresql://<host-pooler>.neon.tech/gerenzdent?sslmode=require
+      - key: DB_URL               # jdbc:postgresql://<host-pooler>.neon.tech/neondb?sslmode=require
         sync: false
       - key: DB_USER
         sync: false

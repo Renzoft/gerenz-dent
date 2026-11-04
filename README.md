@@ -36,7 +36,7 @@ cd mobile && flutter run                   # App en el emulador (usa http://10.0
 Pruebas: `./gradlew build` (backend, requiere Docker) · `flutter test` (mobile).
 Formato: `./gradlew spotlessApply` · `dart format lib test`.
 
-Despliegue: ver [docs/despliegue.md](docs/despliegue.md).
+Producción: API en <https://gerenzdent-api.onrender.com> (Render + Neon). Ver [docs/despliegue.md](docs/despliegue.md).
 
 ## Documentación — Planificación
 
