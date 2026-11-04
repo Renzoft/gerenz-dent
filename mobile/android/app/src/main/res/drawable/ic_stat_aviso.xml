@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícono de la barra de notificaciones: silueta blanca del diente (Android exige un solo color). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="110">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M50,20 C42,12 34,10 28,10 C18,10 12,19 12,32 C12,46 18,56 22,70 C26,86 28,104 36,104 C44,104 44,80 50,80 C56,80 56,104 64,104 C72,104 74,86 78,70 C82,56 88,46 88,32 C88,19 82,10 72,10 C66,10 58,12 50,20 Z" />
+</vector>

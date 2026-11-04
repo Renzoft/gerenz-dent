@@ -61,9 +61,9 @@ class ControlTest {
   @Test
   void transicionInvalidaEsConflicto() {
     Control c = new Control(plan, HOY, null, null, HOY);
-    c.cambiarEstado(EstadoControl.ASISTIO);
+    c.cambiarEstado(EstadoControl.ASISTIO, HOY);
 
-    assertThatThrownBy(() -> c.cambiarEstado(EstadoControl.CANCELADO))
+    assertThatThrownBy(() -> c.cambiarEstado(EstadoControl.CANCELADO, HOY))
         .isInstanceOf(Conflicto.class)
         .hasMessageContaining("asistió");
   }
@@ -71,7 +71,7 @@ class ControlTest {
   @Test
   void reprogramarVuelveAPendiente() {
     Control c = new Control(plan, HOY, null, null, HOY);
-    c.cambiarEstado(EstadoControl.CONFIRMADO);
+    c.cambiarEstado(EstadoControl.CONFIRMADO, HOY);
 
     c.reprogramar(HOY.plusDays(3), LocalTime.of(18, 0), HOY);
 
@@ -82,7 +82,7 @@ class ControlTest {
   @Test
   void noSeReprogramaUnControlCerrado() {
     Control c = new Control(plan, HOY, null, null, HOY);
-    c.cambiarEstado(EstadoControl.CANCELADO);
+    c.cambiarEstado(EstadoControl.CANCELADO, HOY);
 
     assertThatThrownBy(() -> c.reprogramar(HOY.plusDays(1), null, HOY))
         .isInstanceOf(Conflicto.class);
@@ -97,7 +97,7 @@ class ControlTest {
     assertThat(c.estaVencido(cuatroDiasDespues)).isTrue();
     assertThat(c.diasDeAtraso(cuatroDiasDespues)).isEqualTo(4);
 
-    c.cambiarEstado(EstadoControl.ASISTIO);
+    c.cambiarEstado(EstadoControl.ASISTIO, HOY);
     assertThat(c.estaVencido(cuatroDiasDespues)).isFalse();
     assertThat(c.diasDeAtraso(cuatroDiasDespues)).isZero();
   }
@@ -109,5 +109,30 @@ class ControlTest {
     assertThat(new PlanTratamiento(UUID.randomUUID(), PUENTE, 2, HOY).getPiezas()).isEqualTo(2);
     assertThatThrownBy(() -> new PlanTratamiento(UUID.randomUUID(), PUENTE, 0, HOY))
         .isInstanceOf(DatoInvalido.class);
+  }
+
+  @Test
+  void alCerrarseGuardaElDiaRealYNoLaFechaPlanificada() {
+    Control c = new Control(plan, HOY.plusDays(10), null, null, HOY);
+
+    c.cambiarEstado(EstadoControl.ASISTIO, HOY.plusDays(2)); // vino 8 días antes
+
+    assertThat(c.getFecha()).isEqualTo(HOY.plusDays(10));
+    assertThat(c.getCerradoEn()).isEqualTo(HOY.plusDays(2));
+  }
+
+  @Test
+  void registrarRecordatorioPasaDePendienteARecordado() {
+    Control c = new Control(plan, HOY, null, null, HOY);
+    c.registrarRecordatorio();
+    assertThat(c.getEstado()).isEqualTo(EstadoControl.RECORDADO);
+    assertThat(c.getCerradoEn()).isNull();
+
+    c.cambiarEstado(EstadoControl.CONFIRMADO, HOY);
+    c.registrarRecordatorio(); // seguimiento: un confirmado sigue confirmado
+    assertThat(c.getEstado()).isEqualTo(EstadoControl.CONFIRMADO);
+
+    c.cambiarEstado(EstadoControl.CANCELADO, HOY);
+    assertThatThrownBy(c::registrarRecordatorio).isInstanceOf(Conflicto.class);
   }
 }

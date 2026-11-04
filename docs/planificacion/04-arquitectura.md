@@ -168,6 +168,12 @@ GerenzDent/
 ### ADR-004 · Notificación local en vez de push (FCM)
 - **Decisión:** la notificación diaria se programa en el teléfono.
 - **Motivo:** no depende del servidor, no requiere Firebase, cero costo. Un solo usuario y un solo dispositivo.
+- **Implementación (iteración 3):** `flutter_local_notifications` programa 14 avisos (uno por día) a la hora
+  elegida en **America/Lima**, sin importar la zona del teléfono. Usa alarma exacta (`USE_EXACT_ALARM`): la app
+  se instala por APK, fuera de Play Store; si se publicara allí habría que revisar esa política. Sin alarma
+  exacta, Android podría retrasar el aviso hasta 1 hora (hasta las 6:30 p. m., ya con pacientes).
+- **Limitación aceptada:** como el aviso no consulta al servidor, solo el de hoy muestra la cantidad real de
+  pacientes por recordar (se calcula al abrir la app); los demás días usan un texto general.
 
 ### ADR-006 · Autenticación con JWT + refresh token rotativo (iteración 1)
 - **Decisión:** access token JWT HS256 de 15 min (Spring Security Resource Server) y refresh token opaco de

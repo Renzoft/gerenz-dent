@@ -38,7 +38,8 @@ public abstract class PruebaIntegracion {
 
   @BeforeEach
   void limpiarBaseDeDatos() {
-    jdbc.execute("TRUNCATE control, plan_tratamiento, paciente, refresh_token, usuario CASCADE");
+    jdbc.execute(
+        "TRUNCATE recordatorio, control, plan_tratamiento, paciente, refresh_token, usuario CASCADE");
   }
 
   protected Usuario crearUsuario(String email, String password) {

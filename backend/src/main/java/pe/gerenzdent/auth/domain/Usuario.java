@@ -74,6 +74,15 @@ public class Usuario extends EntidadAuditable {
     }
   }
 
+  /** Hora del aviso diario en el teléfono (HU-20). */
+  public void cambiarHoraNotificacion(LocalTime hora) {
+    if (hora == null) {
+      throw new pe.gerenzdent.shared.domain.Excepciones.DatoInvalido(
+          "horaNotificacion", "Elige la hora del aviso.");
+    }
+    this.horaNotificacion = hora.withSecond(0).withNano(0);
+  }
+
   public void registrarLoginExitoso() {
     intentosFallidos = 0;
     bloqueadoHasta = null;

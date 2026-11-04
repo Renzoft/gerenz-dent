@@ -43,4 +43,17 @@ class ArquitecturaTest {
           .dependOnClassesThat()
           .resideInAPackage("..api..")
           .allowEmptyShould(true);
+
+  /**
+   * "Hoy" debe venir de {@code Calendario} (zona America/Lima). {@code LocalDate.now()} usaría la
+   * zona del servidor (UTC) y a las 7 p. m. en Lima ya sería "mañana".
+   */
+  @ArchTest
+  static final ArchRule soloCalendarioObtieneLaFechaDeHoy =
+      noClasses()
+          .that()
+          .doNotHaveSimpleName("Calendario")
+          .should()
+          .callMethod(java.time.LocalDate.class, "now")
+          .because("la fecha de hoy debe calcularse en la zona del consultorio (Calendario)");
 }
