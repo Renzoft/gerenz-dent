@@ -109,7 +109,7 @@ public class ControlService {
       throw new DatoInvalido("estado", "Indica el nuevo estado.");
     }
     Control control = obtener(usuarioId, controlId);
-    control.cambiarEstado(destino);
+    control.cambiarEstado(destino, calendario.hoy());
 
     Optional<LocalDate> sugerencia = Optional.empty();
     if (destino == EstadoControl.ASISTIO) {
@@ -118,6 +118,14 @@ public class ControlService {
           control.getPlan().getTratamiento().fechaSugerida(calendario.hoy(), paciente.getEdad());
     }
     return new CambioDeEstado(controles.saveAndFlush(control), sugerencia);
+  }
+
+  /** Marca que se envió un recordatorio: PENDIENTE pasa a RECORDADO (HU-17). */
+  @Transactional
+  public Control registrarRecordatorio(UUID usuarioId, UUID controlId) {
+    Control control = obtener(usuarioId, controlId);
+    control.registrarRecordatorio();
+    return controles.saveAndFlush(control);
   }
 
   @Transactional

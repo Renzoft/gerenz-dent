@@ -42,6 +42,14 @@ public class AuthController {
     return ResponseEntity.noContent().build();
   }
 
+  /** Cambia la hora del aviso diario (HU-20). */
+  @org.springframework.web.bind.annotation.PatchMapping("/yo")
+  public UsuarioResponse preferencias(
+      @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AuthDtos.PreferenciasRequest request) {
+    return UsuarioResponse.de(
+        auth.cambiarHoraNotificacion(UsuarioAutenticado.id(jwt), request.horaNotificacion()));
+  }
+
   @GetMapping("/yo")
   public UsuarioResponse yo(@AuthenticationPrincipal Jwt jwt) {
     return UsuarioResponse.de(auth.usuarioActual(UsuarioAutenticado.id(jwt)));

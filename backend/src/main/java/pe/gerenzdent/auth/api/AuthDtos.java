@@ -23,6 +23,10 @@ public final class AuthDtos {
     }
   }
 
+  public record PreferenciasRequest(
+      @jakarta.validation.constraints.NotNull(message = "Elige la hora del aviso")
+          LocalTime horaNotificacion) {}
+
   public record RefreshRequest(@NotBlank @Size(max = 200) String refreshToken) {}
 
   public record UsuarioResponse(UUID id, String nombre, String email, LocalTime horaNotificacion) {

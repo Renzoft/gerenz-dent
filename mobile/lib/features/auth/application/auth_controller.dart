@@ -35,6 +35,22 @@ class AuthController extends AsyncNotifier<Usuario?> {
     }
   }
 
+  /// Actualiza los datos del usuario guardados (p. ej. la hora del aviso).
+  Future<void> actualizarUsuario(Usuario usuario) async {
+    final almacen = ref.read(almacenSesionProvider);
+    final sesion = await almacen.leer();
+    if (sesion != null) {
+      await almacen.guardar(
+        Sesion(
+          accessToken: sesion.accessToken,
+          refreshToken: sesion.refreshToken,
+          usuario: usuario,
+        ),
+      );
+    }
+    state = AsyncData(usuario);
+  }
+
   /// Lo llama el interceptor cuando el refresh token ya no sirve.
   Future<void> sesionExpirada() async {
     await ref.read(almacenSesionProvider).borrar();

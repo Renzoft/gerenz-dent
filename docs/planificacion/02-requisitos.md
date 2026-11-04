@@ -76,28 +76,31 @@ Prioridad MoSCoW: **M** = Must (MVP), **S** = Should (MVP si alcanza), **C** = C
 
 **Criterios de aceptación**
 - La notificación es **local** (programada en el teléfono) → funciona aunque el servidor esté dormido.
+  Se programan los próximos 14 días a la hora elegida (hora de Lima, exacta). El de hoy dice cuántos faltan
+  enviar; los demás llevan un texto general. Se reprograma cada vez que se abre la app.
 - Si N = 0, no se muestra notificación.
 - Al volver de WhatsApp, la app pregunta "¿Se envió?" → Sí marca `RECORDADO` con fecha/hora.
 - Vencido = fecha < hoy y estado ∈ {PENDIENTE, RECORDADO, CONFIRMADO}. Se muestra con días de atraso.
 - Pacientes sin consentimiento de WhatsApp no aparecen en la lista de envío (se muestran con un aviso).
 
-**Plantillas de mensaje (trato de "usted", firmadas por el doctor)**
+**Plantillas de mensaje (implementadas en `PlantillaMensaje`, trato de "usted", firmadas por el doctor)**
 
 Recordatorio (día anterior):
 ```
-Hola {nombre} 👋, le saluda el Dr. Marco Munayco del consultorio odontológico *GERENZ DENT*.
-Le recordamos su cita de *{tratamiento}* para mañana *{día} {dd} de {mes}* {hora_texto}.
-Por favor responda *SÍ* para confirmar, o escríbame si necesita cambiar la fecha. ¡Lo espero! 🦷
+Hola {nombre de pila} 👋, le saluda el Dr. Marco Munayco del consultorio odontológico *GERENZ DENT*.
+Le recordamos su cita de *{tratamiento}* para mañana *{día} {dd} de {mes}* {hora_texto}
+Por favor responda *SÍ* para confirmar, o escríbame si necesita cambiar la fecha. ¡Le espero! 🦷
 ```
 
 Seguimiento (vencido):
 ```
-Hola {nombre} 👋, le saluda el Dr. Marco Munayco de *GERENZ DENT*.
-Aún tiene pendiente su control de *{tratamiento}*. Lo espero {horario_texto}.
+Hola {nombre de pila} 👋, le saluda el Dr. Marco Munayco de *GERENZ DENT*.
+Aún tiene pendiente su control de *{tratamiento}*. Le espero de lunes a viernes desde las 6:00 p. m., los sábados desde las 4:00 p. m. y los domingos de 8:00 a. m. a 10:00 p. m.
 Responda a este mensaje para indicarme qué día puede venir. 🦷
 ```
 
-Como el mensaje sale del WhatsApp personal del doctor, se escribe en primera persona ("lo espero", "escríbame").
+Como el mensaje sale del WhatsApp personal del doctor, se escribe en primera persona y con "le" (neutro).
+"mañana" cambia a "hoy" o "el …" según la fecha del control.
 
 `{hora_texto}` = "a las 7:30 p. m." si hay hora, o "a partir de las 6:00 p. m." (según el día) si no la hay.
 

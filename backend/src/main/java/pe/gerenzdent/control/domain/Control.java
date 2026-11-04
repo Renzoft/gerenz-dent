@@ -40,6 +40,10 @@ public class Control extends EntidadAuditable {
   @Column(nullable = false, length = 15)
   private EstadoControl estado;
 
+  /** Día real (Lima) en que se cerró: asistió, no asistió o cancelado. */
+  @Column(name = "cerrado_en")
+  private LocalDate cerradoEn;
+
   protected Control() {}
 
   public Control(
@@ -50,14 +54,33 @@ public class Control extends EntidadAuditable {
     this.nota = validarNota(nota);
   }
 
-  /** Cambia el estado si la transición está permitida (si no, 409). */
-  public void cambiarEstado(EstadoControl destino) {
+  /**
+   * Cambia el estado si la transición está permitida (si no, 409). Al cerrarse guarda el día real,
+   * que puede no coincidir con la fecha planificada (el paciente vino antes o después).
+   */
+  public void cambiarEstado(EstadoControl destino, LocalDate hoy) {
     if (!estado.puedePasarA(destino)) {
       throw new Conflicto(
           "No se puede cambiar el control de %s a %s.".formatted(texto(estado), texto(destino)),
           Map.of("estadoActual", estado.name()));
     }
     estado = destino;
+    cerradoEn = destino.esAbierto() ? null : hoy;
+  }
+
+  /**
+   * El doctor confirmó haber enviado un recordatorio (HU-17). Un control pendiente pasa a
+   * RECORDADO; si ya estaba recordado o confirmado, no cambia.
+   */
+  public void registrarRecordatorio() {
+    if (!estado.esAbierto()) {
+      throw new Conflicto(
+          "Este control ya está cerrado (%s).".formatted(texto(estado)),
+          Map.of("estadoActual", estado.name()));
+    }
+    if (estado == EstadoControl.PENDIENTE) {
+      estado = EstadoControl.RECORDADO;
+    }
   }
 
   /** Cambia la fecha (y hora) y vuelve a PENDIENTE (HU-14). */
@@ -128,5 +151,9 @@ public class Control extends EntidadAuditable {
 
   public EstadoControl getEstado() {
     return estado;
+  }
+
+  public LocalDate getCerradoEn() {
+    return cerradoEn;
   }
 }

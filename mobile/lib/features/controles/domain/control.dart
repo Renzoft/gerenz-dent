@@ -63,6 +63,7 @@ class Control {
     this.diasAtraso = 0,
     this.piezas,
     this.paciente,
+    this.cerradoEn,
   });
 
   factory Control.fromJson(Map<String, dynamic> json) {
@@ -75,6 +76,9 @@ class Control {
       hora: Fechas.horaDesdeApi(json['hora'] as String?),
       nota: json['nota'] as String?,
       estado: EstadoControl.desdeApi(json['estado'] as String),
+      cerradoEn: json['cerradoEn'] == null
+          ? null
+          : DateTime.parse(json['cerradoEn'] as String),
       vencido: json['vencido'] as bool? ?? false,
       diasAtraso: (json['diasAtraso'] as num?)?.toInt() ?? 0,
       tratamientoId: tratamiento['id'] as String,
@@ -90,6 +94,9 @@ class Control {
   final TimeOfDay? hora;
   final String? nota;
   final EstadoControl estado;
+
+  /// Día real en que se cerró (asistió, no vino o se canceló).
+  final DateTime? cerradoEn;
   final bool vencido;
   final int diasAtraso;
   final String tratamientoId;

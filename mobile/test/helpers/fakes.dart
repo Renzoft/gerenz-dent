@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:gerenz_dent/core/avisos/avisos_diarios.dart';
+import 'package:gerenz_dent/core/avisos/envio_whatsapp.dart';
 import 'package:gerenz_dent/core/formato/fechas.dart';
 import 'package:gerenz_dent/features/auth/data/almacen_sesion.dart';
 import 'package:gerenz_dent/features/auth/data/auth_repository.dart';
@@ -6,6 +9,8 @@ import 'package:gerenz_dent/features/controles/data/controles_repository.dart';
 import 'package:gerenz_dent/features/controles/domain/control.dart';
 import 'package:gerenz_dent/features/pacientes/data/pacientes_repository.dart';
 import 'package:gerenz_dent/features/pacientes/domain/paciente.dart';
+import 'package:gerenz_dent/features/recordatorios/data/recordatorios_repository.dart';
+import 'package:gerenz_dent/features/recordatorios/domain/mensaje_recordatorio.dart';
 import 'package:gerenz_dent/features/tratamientos/data/tratamientos_repository.dart';
 import 'package:gerenz_dent/features/tratamientos/domain/tratamiento.dart';
 import 'package:mocktail/mocktail.dart';
@@ -103,4 +108,68 @@ Control controlPrueba({
   vencido: vencido,
   diasAtraso: diasAtraso,
   paciente: paciente,
+);
+
+class RecordatoriosRepositoryFalso extends Mock
+    implements RecordatoriosRepository {}
+
+/// Registra las llamadas en lugar de mostrar notificaciones reales.
+class ServicioAvisosFalso implements ServicioAvisos {
+  final programaciones = <({TimeOfDay hora, int? pendientesHoy})>[];
+  var pruebas = 0;
+  var cancelados = 0;
+  bool permiso = true;
+
+  @override
+  Future<void> inicializar() async {}
+
+  @override
+  Future<bool> pedirPermiso() async => permiso;
+
+  @override
+  Future<void> programar({required TimeOfDay hora, int? pendientesHoy}) async =>
+      programaciones.add((hora: hora, pendientesHoy: pendientesHoy));
+
+  @override
+  Future<void> cancelarTodos() async => cancelados++;
+
+  @override
+  Future<void> probar() async => pruebas++;
+}
+
+/// Simula abrir WhatsApp y volver a la app al instante.
+class EnvioWhatsappFalso implements EnvioWhatsapp {
+  EnvioWhatsappFalso({this.exito = true});
+
+  final bool exito;
+  final abiertos = <String>[];
+
+  @override
+  Future<bool> abrirYEsperarRegreso(String enlace) async {
+    abiertos.add(enlace);
+    return exito;
+  }
+}
+
+MensajeRecordatorio mensajePrueba({
+  String controlId = 'c-1',
+  String paciente = 'Juan Pérez',
+  TipoRecordatorio tipo = TipoRecordatorio.previo,
+  bool enviado = false,
+  bool consiente = true,
+  int diasAtraso = 0,
+}) => MensajeRecordatorio(
+  controlId: controlId,
+  tipo: tipo,
+  fecha: Fechas.hoy().add(const Duration(days: 1)),
+  estado: enviado ? EstadoControl.recordado : EstadoControl.pendiente,
+  diasAtraso: diasAtraso,
+  tratamiento: 'Brackets (ortodoncia)',
+  pacienteId: 'p-$controlId',
+  pacienteNombre: paciente,
+  pacienteWhatsapp: '+51987654321',
+  consienteWhatsapp: consiente,
+  mensaje: 'Hola ${paciente.split(' ').first}',
+  enlace: consiente ? 'https://wa.me/51987654321?text=Hola' : null,
+  enviado: enviado,
 );

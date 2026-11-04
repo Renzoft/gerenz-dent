@@ -232,7 +232,8 @@ class FilaHistorial extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.circle, size: 12, color: control.estado.color),
       title: Text(control.tratamientoNombre),
-      subtitle: Text(Fechas.corta(control.fecha)),
+      // Día real en que se cerró; si no se conoce, la fecha planificada.
+      subtitle: Text(Fechas.corta(control.cerradoEn ?? control.fecha)),
       trailing: Text(
         control.estado.etiqueta,
         style: TextStyle(

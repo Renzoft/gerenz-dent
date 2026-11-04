@@ -121,6 +121,13 @@ public class AuthService {
         .ifPresent(t -> t.revocar(reloj.instant()));
   }
 
+  @Transactional
+  public Usuario cambiarHoraNotificacion(UUID usuarioId, java.time.LocalTime hora) {
+    Usuario usuario = usuarioActual(usuarioId);
+    usuario.cambiarHoraNotificacion(hora);
+    return usuarios.saveAndFlush(usuario);
+  }
+
   @Transactional(readOnly = true)
   public Usuario usuarioActual(UUID usuarioId) {
     return usuarios
