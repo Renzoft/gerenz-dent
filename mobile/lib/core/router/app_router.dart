@@ -20,7 +20,8 @@ abstract final class Rutas {
   static const pacienteNuevo = '/pacientes/nuevo';
   static const ajustes = '/ajustes';
 
-  static String paciente(String id) => '/pacientes/$id';
+  static String paciente(String id, {bool agendar = false}) =>
+      '/pacientes/$id${agendar ? '?agendar=1' : ''}';
   static String pacienteEditar(String id) => '/pacientes/$id/editar';
 }
 
@@ -64,8 +65,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/pacientes/:id',
-        builder: (context, state) =>
-            PacienteDetallePage(pacienteId: state.pathParameters['id']!),
+        builder: (context, state) => PacienteDetallePage(
+          pacienteId: state.pathParameters['id']!,
+          abrirAgendar: state.uri.queryParameters['agendar'] == '1',
+        ),
       ),
       // Pestañas con barra inferior.
       StatefulShellRoute.indexedStack(
