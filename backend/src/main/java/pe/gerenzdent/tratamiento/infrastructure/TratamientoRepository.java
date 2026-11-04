@@ -8,4 +8,14 @@ import pe.gerenzdent.tratamiento.domain.Tratamiento;
 public interface TratamientoRepository extends JpaRepository<Tratamiento, UUID> {
 
   List<Tratamiento> findByActivoTrueOrderByOrdenAscNombreAsc();
+
+  List<Tratamiento> findAllByOrderByActivoDescOrdenAscNombreAsc();
+
+  boolean existsByNombreIgnoreCase(String nombre);
+
+  boolean existsByNombreIgnoreCaseAndIdNot(String nombre, UUID id);
+
+  @org.springframework.data.jpa.repository.Query(
+      "select coalesce(max(t.orden), 0) from Tratamiento t")
+  int ordenMaximo();
 }

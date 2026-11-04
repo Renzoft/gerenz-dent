@@ -13,7 +13,7 @@ class TratamientoTest {
   private static final LocalDate HOY = LocalDate.of(2026, 11, 10);
 
   private static Tratamiento con(Integer intervalo, Integer edadMaxima) {
-    return new Tratamiento("X", TipoPrecio.FIJO, BigDecimal.ONE, null, intervalo, edadMaxima);
+    return new Tratamiento("Flúor", TipoPrecio.FIJO, BigDecimal.ONE, null, intervalo, edadMaxima);
   }
 
   @Test

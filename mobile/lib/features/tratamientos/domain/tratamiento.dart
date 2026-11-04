@@ -1,14 +1,16 @@
 /// Cómo se cobra un tratamiento.
 enum TipoPrecio {
-  fijo,
-  porPieza,
-  inicialMasMensual;
+  fijo('FIJO', 'Precio fijo'),
+  porPieza('POR_PIEZA', 'Por pieza'),
+  inicialMasMensual('INICIAL_MAS_MENSUAL', 'Inicial + mensual');
 
-  static TipoPrecio desdeApi(String valor) => switch (valor) {
-    'POR_PIEZA' => porPieza,
-    'INICIAL_MAS_MENSUAL' => inicialMasMensual,
-    _ => fijo,
-  };
+  const TipoPrecio(this.api, this.etiqueta);
+
+  final String api;
+  final String etiqueta;
+
+  static TipoPrecio desdeApi(String valor) =>
+      values.firstWhere((t) => t.api == valor, orElse: () => fijo);
 }
 
 /// Tratamiento del catálogo del consultorio.
@@ -21,6 +23,7 @@ class Tratamiento {
     this.precioMensual,
     this.intervaloControlDias,
     this.edadMaximaControl,
+    this.activo = true,
   });
 
   factory Tratamiento.fromJson(Map<String, dynamic> json) => Tratamiento(
@@ -31,6 +34,7 @@ class Tratamiento {
     precioMensual: (json['precioMensual'] as num?)?.toDouble(),
     intervaloControlDias: json['intervaloControlDias'] as int?,
     edadMaximaControl: json['edadMaximaControl'] as int?,
+    activo: json['activo'] as bool? ?? true,
   );
 
   final String id;
@@ -40,6 +44,7 @@ class Tratamiento {
   final double? precioMensual;
   final int? intervaloControlDias;
   final int? edadMaximaControl;
+  final bool activo;
 
   bool get esPorPieza => tipoPrecio == TipoPrecio.porPieza;
 }
