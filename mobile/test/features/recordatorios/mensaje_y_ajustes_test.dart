@@ -99,5 +99,16 @@ void main() {
       expect(avisos.pruebas, 0);
       expect(find.textContaining('Activa las notificaciones'), findsOneWidget);
     });
+
+    testWidgets('si el aviso falla, muestra el motivo', (tester) async {
+      await montar(tester);
+      avisos.errorAlProbar = true;
+      await tester.tap(find.text('Probar aviso'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('No se pudo mostrar el aviso'),
+        findsOneWidget,
+      );
+    });
   });
 }

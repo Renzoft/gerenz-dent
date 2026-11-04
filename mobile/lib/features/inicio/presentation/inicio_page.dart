@@ -48,8 +48,9 @@ class _InicioPageState extends ConsumerState<InicioPage> {
             hora: usuario.horaNotificacion,
             pendientesHoy: manana.where((m) => m.porEnviar).length,
           );
-    } catch (_) {
+    } catch (e) {
       // Sin permiso de notificaciones la app sigue funcionando.
+      debugPrint('No se pudo programar el aviso diario: $e');
     }
   }
 
