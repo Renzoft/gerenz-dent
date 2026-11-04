@@ -49,3 +49,15 @@ springdoc:
 
 app:
   zona-horaria: America/Lima
+  seguridad:
+    # Obligatorio en producción (mín. 32 caracteres). Sin valor, la API no arranca.
+    jwt-secreto: ${JWT_SECRET:}
+    access-token-minutos: 15
+    refresh-token-dias: 30
+    max-intentos-login: 5
+    bloqueo-minutos: 15
+  # Crea el usuario del doctor en el primer arranque si la tabla está vacía.
+  admin-inicial:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+    nombre: ${ADMIN_NOMBRE:Dr. Marco Munayco}

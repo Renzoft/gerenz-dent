@@ -115,7 +115,7 @@ Errores con formato estándar **RFC 9457 (Problem Details)**.
 | Estado | Riverpod |
 | Navegación | go_router |
 | HTTP | dio (interceptor JWT + reintentos) |
-| Modelos | freezed + json_serializable |
+| Modelos | Clases inmutables escritas a mano con `fromJson`/`toJson` (sin generación de código: build más simple; se reevalúa si los modelos crecen) |
 | Almacenamiento seguro | flutter_secure_storage |
 | Notificación diaria | flutter_local_notifications + timezone |
 | Abrir WhatsApp | url_launcher (`https://wa.me/<num>?text=<texto codificado>`) |
@@ -168,6 +168,17 @@ GerenzDent/
 ### ADR-004 · Notificación local en vez de push (FCM)
 - **Decisión:** la notificación diaria se programa en el teléfono.
 - **Motivo:** no depende del servidor, no requiere Firebase, cero costo. Un solo usuario y un solo dispositivo.
+
+### ADR-006 · Autenticación con JWT + refresh token rotativo (iteración 1)
+- **Decisión:** access token JWT HS256 de 15 min (Spring Security Resource Server) y refresh token opaco de
+  30 días, de un solo uso. En la BD solo se guarda su hash SHA-256. Reutilizar un refresh token ya usado
+  cierra todas las sesiones (posible robo).
+- **Usuario único:** no hay registro público. El usuario del doctor se crea en el primer arranque desde
+  `ADMIN_EMAIL` / `ADMIN_PASSWORD` (variables de entorno). `JWT_SECRET` es obligatorio: sin él la API no arranca.
+- **App:** los tokens van en `flutter_secure_storage` (Keystore). Un interceptor renueva la sesión ante un 401
+  una sola vez y reintenta; si no puede, lleva al login. La sesión se restaura sin red al abrir la app.
+- **Bloqueo:** 5 intentos fallidos → 15 min (HTTP 429 con `Retry-After`). Mismo mensaje para correo
+  inexistente o clave errada.
 
 ### ADR-005 · Online-first
 - **Decisión:** sin base de datos local en el MVP; solo caché en memoria.

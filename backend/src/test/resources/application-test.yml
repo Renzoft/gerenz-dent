@@ -1,0 +1,6 @@
+app:
+  seguridad:
+    jwt-secreto: test-secreto-para-pruebas-automatizadas-0123456789
+  admin-inicial:
+    email: ""
+    password: ""

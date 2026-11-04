@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../auth/application/auth_controller.dart';
 import '../data/salud_repository.dart';
 
 /// Pantalla de inicio (iteración 0): marca + estado de conexión con la API.
@@ -13,6 +14,7 @@ class InicioPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final estado = ref.watch(estadoServidorProvider);
+    final nombre = ref.watch(authControllerProvider).value?.nombre;
 
     return Scaffold(
       body: SafeArea(
@@ -29,7 +31,7 @@ class InicioPage extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
               Text(
-                'Bienvenido, Dr. Marco Munayco',
+                nombre == null ? 'Bienvenido' : 'Bienvenido, $nombre',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleLarge,
               ),

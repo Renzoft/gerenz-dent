@@ -23,3 +23,9 @@ services:
         value: "3"
       - key: API_DOCS_ENABLED     # Swagger desactivado en producción
         value: "false"
+      - key: JWT_SECRET           # Render genera un valor aleatorio seguro
+        generateValue: true
+      - key: ADMIN_EMAIL          # Usuario del doctor: se crea en el primer arranque si no existe
+        sync: false
+      - key: ADMIN_PASSWORD       # Mínimo 10 caracteres
+        sync: false
