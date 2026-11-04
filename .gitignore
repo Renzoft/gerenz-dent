@@ -1,0 +1,49 @@
+# ── Secretos y configuración local (NUNCA subir) ──
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+key.properties
+**/application-local.yml
+**/application-local.properties
+*.sql.gpg
+backups/
+
+# ── SO / editores ──
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# ── Backend (Java / Gradle) ──
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/out/
+*.class
+*.log
+hs_err_pid*
+
+# ── Mobile (Flutter / Dart / Android) ──
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/coverage/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+mobile/ios/Pods/
+*.g.dart.bak
+
+# ── Claude Code (local) ──
+.claude/settings.local.json
