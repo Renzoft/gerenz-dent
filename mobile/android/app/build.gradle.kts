@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Firma de release: android/key.properties (fuera de git) apunta al keystore guardado en la
+// carpeta .gerenzdent del usuario. Sin ese archivo (por ejemplo en CI) se firma con la clave de debug.
+val propiedadesFirma = Properties().apply {
+    val archivo = rootProject.file("key.properties")
+    if (archivo.exists()) archivo.inputStream().use { load(it) }
+}
+val hayFirmaRelease = propiedadesFirma.getProperty("storeFile") != null
 
 android {
     namespace = "pe.gerenzdent.gerenz_dent"
@@ -24,11 +34,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hayFirmaRelease) {
+            create("release") {
+                storeFile = file(propiedadesFirma.getProperty("storeFile"))
+                storePassword = propiedadesFirma.getProperty("storePassword")
+                keyAlias = propiedadesFirma.getProperty("keyAlias")
+                keyPassword = propiedadesFirma.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Firma de release: se configura en la iteración 5 (keystore fuera del repo).
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig =
+                if (hayFirmaRelease) signingConfigs.getByName("release")
+                else signingConfigs.getByName("debug")
         }
     }
 }

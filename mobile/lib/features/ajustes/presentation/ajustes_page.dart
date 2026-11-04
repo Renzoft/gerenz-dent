@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/avisos/avisos_diarios.dart';
 import '../../../core/config/env.dart';
 import '../../../core/formato/fechas.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/widgets/estados.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/sesion.dart';
@@ -129,6 +131,14 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
             onTap: _guardando ? null : () => _cambiarHora(hora),
           ),
           ListTile(
+            leading: const Icon(Icons.medical_services_outlined),
+            title: const Text('Catálogo de tratamientos'),
+            subtitle: const Text('Precios, cuotas y controles sugeridos'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Rutas.catalogo),
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.notification_add_outlined),
             title: const Text('Probar aviso'),
             subtitle: const Text('Muestra ahora un aviso de ejemplo'),
@@ -144,7 +154,7 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('GERENZ DENT'),
-            subtitle: Text('Versión 0.5.0 · ${Env.apiUrl}'),
+            subtitle: Text('Versión 1.0.0 · ${Env.apiUrl}'),
           ),
         ],
       ),

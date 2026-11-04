@@ -10,6 +10,7 @@ import '../../features/inicio/presentation/inicio_page.dart';
 import '../../features/pacientes/presentation/paciente_detalle_page.dart';
 import '../../features/pacientes/presentation/paciente_form_page.dart';
 import '../../features/pacientes/presentation/pacientes_page.dart';
+import '../../features/tratamientos/presentation/catalogo_page.dart';
 import '../widgets/estados.dart';
 import 'navegacion_principal.dart';
 
@@ -21,6 +22,7 @@ abstract final class Rutas {
   static const pacienteNuevo = '/pacientes/nuevo';
   static const deudas = '/deudas';
   static const ajustes = '/ajustes';
+  static const catalogo = '/ajustes/catalogo';
 
   static String paciente(String id, {bool agendar = false}) =>
       '/pacientes/$id${agendar ? '?agendar=1' : ''}';
@@ -59,6 +61,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Rutas.pacienteNuevo,
         builder: (context, state) => const PacienteFormPage(),
+      ),
+      GoRoute(
+        path: Rutas.catalogo,
+        builder: (context, state) => const CatalogoPage(),
       ),
       GoRoute(
         path: '/pacientes/:id/editar',

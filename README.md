@@ -1,7 +1,7 @@
 # GERENZ DENT
 
 App Android para el consultorio odontológico **GERENZ DENT**: registro de pacientes, próximo control,
-recordatorios por WhatsApp (semiautomáticos) y seguimiento de deudas.
+recordatorios por WhatsApp (semiautomáticos) y seguimiento de deudas. **Versión 1.0.0 (MVP completo).**
 
 [![backend-ci](https://github.com/Renzoft/gerenz-dent/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Renzoft/gerenz-dent/actions/workflows/backend-ci.yml)
 [![mobile-ci](https://github.com/Renzoft/gerenz-dent/actions/workflows/mobile-ci.yml/badge.svg)](https://github.com/Renzoft/gerenz-dent/actions/workflows/mobile-ci.yml)
@@ -38,7 +38,13 @@ Formato: `./gradlew spotlessApply` · `dart format lib test`.
 
 Producción: API en <https://gerenzdent-api.onrender.com> (Render + Neon). Ver [docs/despliegue.md](docs/despliegue.md).
 
-## Documentación — Planificación
+## Documentación
+
+- [Manual de uso](docs/manual-de-uso.md) (para el doctor)
+- [Prueba de aceptación con el doctor](docs/prueba-con-el-doctor.md)
+- [Publicar una versión](docs/publicar-version.md) · [Despliegue](docs/despliegue.md)
+
+### Planificación
 
 1. [Visión y alcance](docs/planificacion/01-vision-y-alcance.md)
 2. [Requisitos](docs/planificacion/02-requisitos.md)

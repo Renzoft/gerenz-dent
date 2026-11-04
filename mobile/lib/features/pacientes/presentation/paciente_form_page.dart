@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/contactos/selector_contactos.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/estados.dart';
@@ -86,6 +87,28 @@ class _FormularioState extends ConsumerState<_Formulario> {
   String? _opcional(TextEditingController c) {
     final t = c.text.trim();
     return t.isEmpty ? null : t;
+  }
+
+  /// HU-07: trae el número (y el nombre, si aún no se escribió) de la agenda.
+  Future<void> _importarContacto() async {
+    try {
+      final contacto = await ref
+          .read(selectorContactosProvider)
+          .elegirTelefono();
+      if (contacto == null || !mounted) return;
+      setState(() {
+        if (contacto.telefono != null) _whatsapp.text = contacto.telefono!;
+        final nombre = contacto.nombre?.trim();
+        if (_nombre.text.trim().isEmpty &&
+            nombre != null &&
+            nombre.isNotEmpty) {
+          _nombre.text = nombre;
+        }
+      });
+      _formulario.currentState?.validate();
+    } catch (_) {
+      if (mounted) mostrarMensaje(context, 'No se pudo abrir los contactos.');
+    }
   }
 
   Future<void> _guardar() async {
@@ -186,11 +209,16 @@ class _FormularioState extends ConsumerState<_Formulario> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _whatsapp,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'WhatsApp *',
                 hintText: '987 654 321',
-                prefixIcon: Icon(Icons.phone_android),
-                border: OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.phone_android),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  tooltip: 'Elegir de mis contactos',
+                  icon: const Icon(Icons.contacts_outlined),
+                  onPressed: _importarContacto,
+                ),
               ),
               keyboardType: TextInputType.phone,
               inputFormatters: [

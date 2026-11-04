@@ -15,6 +15,17 @@ Trabajo en **iteraciones de 1 semana**. Cada iteración entrega algo que funcion
 > El MVP útil para el doctor llega en la **iteración 3**. Desde ahí, cada iteración se le entrega como
 > una actualización del APK.
 
+## Estado (2026-11-04)
+
+| Iteración | PR | Estado |
+|---|---|---|
+| 0 · Cimientos | #1, #2 | ✅ En producción |
+| 1 · Acceso y pacientes | #3 | ✅ En producción |
+| 2 · Tratamientos y controles | #4 | ✅ En producción |
+| 3 · Recordatorios | #5, #6 | ✅ En producción (probado en el celular) |
+| 4 · Deudas y pagos | #7 | ✅ En producción |
+| 5 · Pulido y piloto | este PR | Catálogo editable, contactos, firma 1.0.0, manual; falta la UAT con el doctor |
+
 ## Definition of Done (por historia)
 
 - [ ] Criterios de aceptación cumplidos.
