@@ -119,6 +119,7 @@ class ServicioAvisosFalso implements ServicioAvisos {
   var pruebas = 0;
   var cancelados = 0;
   bool permiso = true;
+  bool errorAlProbar = false;
 
   @override
   Future<void> inicializar() async {}
@@ -134,7 +135,10 @@ class ServicioAvisosFalso implements ServicioAvisos {
   Future<void> cancelarTodos() async => cancelados++;
 
   @override
-  Future<void> probar() async => pruebas++;
+  Future<void> probar() async {
+    if (errorAlProbar) throw Exception('invalid_icon');
+    pruebas++;
+  }
 }
 
 /// Simula abrir WhatsApp y volver a la app al instante.

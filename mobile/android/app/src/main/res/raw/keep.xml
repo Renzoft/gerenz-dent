@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  En el build release, R8 elimina los recursos que no ve usados desde el código Java/Kotlin.
+  El ícono del aviso solo se nombra desde Dart ('@drawable/ic_stat_aviso'), así que sin esta
+  regla se borra y las notificaciones fallan en silencio (README de flutter_local_notifications).
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_aviso" />
