@@ -1,16 +1,16 @@
 # GERENZ DENT · Manual de uso
 
-Guía rápida para el Dr. Marco Munayco. La app tiene 4 pestañas abajo: **Inicio · Pacientes · Deudas · Ajustes**.
+Guía rápida para el Dr. Marco Munayco Chacón. La app tiene 4 pestañas abajo: **Inicio · Pacientes · Deudas · Ajustes**.
 
 ---
 
 ## 1. Lo de todos los días (2 minutos)
 
-A las **5:30 p. m.** llega un aviso: *"Mañana tienes 3 pacientes por recordar"*.
+A las **4:30 p. m.** llega un aviso: *"Mañana tienes 3 pacientes por recordar"*.
 
 1. Toque el aviso → se abre **Inicio**.
-2. En **"Recordar para mañana"**, toque **Enviar** en cada paciente
-   (o **"Enviar todos uno por uno"**).
+2. En la tarjeta **"Recordatorios de mañana"**, toque el botón verde **"Enviar recordatorios"**
+   (o **Enviar** en un paciente).
 3. Se abre **WhatsApp con el mensaje ya escrito** → presione enviar ✈️.
 4. Vuelva a la app → **"¿Se envió?"** → **Sí, se envió**. Queda ✔ *Enviado*.
 
@@ -43,8 +43,10 @@ En su ficha, en **Próximo control**:
 | **Reprogramar** | Cambia la fecha. |
 | **⋮ → Cancelar** | Anula el control. |
 
-**¿Vino días después?** No hay problema: el control aparece en **Inicio → Vencidos** hasta que marque *Asistió*.
-Desde ahí puede enviarle un **Seguimiento** por WhatsApp.
+**¿Vino días después?** No hay problema: el paciente aparece en **Inicio → "No vinieron"** hasta que marque *Asistió*.
+Desde ahí toque **Escribirle** para mandarle un mensaje por WhatsApp.
+
+En **Inicio** también verá **"Hoy vienen"** (los citados del día) y, plegado al final, **"Próximos días"**.
 
 ---
 
@@ -59,10 +61,12 @@ Desde ahí puede enviarle un **Seguimiento** por WhatsApp.
 
 ---
 
+En la ficha, los **datos del paciente** (edad, nota, autorización de WhatsApp) están plegados:
+tóquelos para verlos. Si tiene **alergias**, se muestran siempre arriba en rojo.
+
 ## 5. Ajustes
 
-- **Hora del aviso diario** (5:30 p. m. por defecto).
-- **Probar aviso**: para comprobar que las notificaciones funcionan.
+- **Hora del aviso diario** (4:30 p. m. por defecto).
 - **Catálogo de tratamientos**: cambiar precios, cuotas y cada cuántos días sugerir control;
   agregar tratamientos nuevos o desactivar los que ya no hace.
   *Los cambios de precio solo afectan a tratamientos que empiecen desde ahora.*
@@ -74,7 +78,7 @@ Desde ahí puede enviarle un **Seguimiento** por WhatsApp.
 | Problema | Qué hacer |
 |---|---|
 | "Conectando con el consultorio…" tarda | Es normal la primera vez del día (hasta 1 minuto). |
-| No llega el aviso de las 5:30 | Ajustes → **Probar aviso**. Si no aparece: Ajustes del teléfono → Apps → GERENZ DENT → **Notificaciones: activadas** y **sin ahorro de batería**. |
+| No llega el aviso de las 4:30 | Ajustes del teléfono → Apps → GERENZ DENT → **Notificaciones: activadas** y **sin ahorro de batería**. |
 | WhatsApp no se abre | Verifique que WhatsApp esté instalado y actualizado. |
 | Pide iniciar sesión de nuevo | Ingrese su correo y contraseña; sus pacientes no se pierden (están en el servidor). |
 

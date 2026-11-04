@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/avisos/avisos_diarios.dart';
@@ -16,7 +15,12 @@ import '../../recordatorios/application/recordatorios_providers.dart';
 import '../../recordatorios/domain/mensaje_recordatorio.dart';
 import '../data/salud_repository.dart';
 
-/// Inicio (P1): recordar para mañana, vencidos y próximos 7 días.
+/// Inicio (v1.1): tarjetas en el orden en que el doctor las usa en el día.
+///
+/// 1. Recordatorios de mañana (la tarea diaria, con un botón grande).
+/// 2. Hoy vienen.
+/// 3. No vinieron (seguimiento).
+/// 4. Próximos días (plegado).
 class InicioPage extends ConsumerStatefulWidget {
   const InicioPage({super.key});
 
@@ -36,17 +40,18 @@ class _InicioPageState extends ConsumerState<InicioPage> {
     });
   }
 
-  /// Reprograma el aviso diario con la cantidad de mensajes que faltan (HU-15).
-  Future<void> _reprogramarAvisos(List<MensajeRecordatorio> manana) async {
+  /// Reprograma el aviso diario con la hora del doctor y lo que falta enviar
+  /// (HU-15). Se llama cuando cambia la lista de mañana o la hora del aviso.
+  Future<void> _reprogramarAvisos() async {
     try {
-      // Puede llegar antes que la sesión restaurada: se espera a que cargue.
       final usuario = await ref.read(authControllerProvider.future);
       if (usuario == null) return;
+      final manana = ref.read(recordatoriosMananaProvider).value;
       await ref
           .read(servicioAvisosProvider)
           .programar(
             hora: usuario.horaNotificacion,
-            pendientesHoy: manana.where((m) => m.porEnviar).length,
+            pendientesHoy: manana?.where((m) => m.porEnviar).length,
           );
     } catch (e) {
       // Sin permiso de notificaciones la app sigue funcionando.
@@ -57,36 +62,26 @@ class _InicioPageState extends ConsumerState<InicioPage> {
   @override
   Widget build(BuildContext context) {
     ref.listen(recordatoriosMananaProvider, (_, siguiente) {
-      if (siguiente.value case final lista?) _reprogramarAvisos(lista);
+      if (siguiente.hasValue) _reprogramarAvisos();
     });
+    ref.listen(
+      authControllerProvider.select((u) => u.value?.horaNotificacion),
+      (anterior, siguiente) {
+        if (anterior != null && anterior != siguiente) _reprogramarAvisos();
+      },
+    );
     final estado = ref.watch(estadoServidorProvider);
-    final nombre = ref.watch(authControllerProvider).value?.nombre;
-    final textos = Theme.of(context).textTheme;
+    final usuario = ref.watch(authControllerProvider).value;
 
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => _reintentarTodo(ref),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
             children: [
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/branding/icono-app.svg',
-                    height: 44,
-                    semanticsLabel: 'GERENZ DENT',
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      nombre == null ? 'Bienvenido' : 'Bienvenido, $nombre',
-                      style: textos.titleLarge,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+              _Encabezado(nombreCorto: usuario?.nombreCorto),
+              const SizedBox(height: 20),
               // Solo se muestra mientras conecta o si falla.
               if (!(estado.value ?? false)) ...[
                 Card(
@@ -113,11 +108,13 @@ class _InicioPageState extends ConsumerState<InicioPage> {
                 ),
                 const SizedBox(height: 16),
               ],
-              const _SeccionManana(),
-              const SizedBox(height: 24),
-              const _SeccionSeguimientos(),
-              const SizedBox(height: 24),
-              const _SeccionProximos(),
+              const _TarjetaRecordatorios(),
+              const SizedBox(height: 16),
+              const _TarjetaHoy(),
+              const SizedBox(height: 16),
+              const _TarjetaNoVinieron(),
+              const SizedBox(height: 16),
+              const _TarjetaProximos(),
             ],
           ),
         ),
@@ -132,228 +129,524 @@ class _InicioPageState extends ConsumerState<InicioPage> {
   }
 }
 
-/// "Recordar para mañana" con Enviar y "Enviar todos uno por uno" (HU-16).
-class _SeccionManana extends ConsumerWidget {
-  const _SeccionManana();
+// ---------------------------------------------------------------------------
+// Encabezado
+// ---------------------------------------------------------------------------
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final manana = ref.watch(recordatoriosMananaProvider);
-    final lista = manana.value ?? const <MensajeRecordatorio>[];
-    final porEnviar = lista.where((m) => m.porEnviar).length;
+class _Encabezado extends StatelessWidget {
+  const _Encabezado({this.nombreCorto});
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _Titulo(
-          manana.hasValue
-              ? 'Recordar para mañana (${lista.length})'
-              : 'Recordar para mañana',
-        ),
-        _Contenido<MensajeRecordatorio>(
-          valor: manana,
-          vacio: 'No hay controles para mañana.',
-          construir: (lista) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final m in lista) _FilaMensaje(mensaje: m),
-              if (porEnviar > 1) ...[
-                const SizedBox(height: 8),
-                FilledButton.icon(
-                  onPressed: () => enviarTodos(context, ref, lista),
-                  icon: const Icon(Icons.send),
-                  label: Text('Enviar todos uno por uno ($porEnviar)'),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
+  final String? nombreCorto;
+
+  static String saludo(DateTime ahora) {
+    if (ahora.hour < 12) return 'Buenos días';
+    if (ahora.hour < 19) return 'Buenas tardes';
+    return 'Buenas noches';
   }
-}
-
-/// Controles vencidos con su mensaje de seguimiento (HU-18).
-class _SeccionSeguimientos extends ConsumerWidget {
-  const _SeccionSeguimientos();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final seguimientos = ref.watch(seguimientosProvider);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _Titulo(
-          seguimientos.hasValue
-              ? 'Vencidos (${seguimientos.value!.length})'
-              : 'Vencidos',
-          color: AppColors.error,
-        ),
-        _Contenido<MensajeRecordatorio>(
-          valor: seguimientos,
-          vacio: 'No hay controles vencidos.',
-          construir: (lista) => Column(
-            children: [for (final m in lista) _FilaMensaje(mensaje: m)],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SeccionProximos extends ConsumerWidget {
-  const _SeccionProximos();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final agenda = ref.watch(agendaSemanaProvider);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _Titulo(
-          agenda.hasValue
-              ? 'Próximos 7 días (${agenda.value!.length})'
-              : 'Próximos 7 días',
-        ),
-        _Contenido<Control>(
-          valor: agenda,
-          vacio: 'No hay controles en los próximos 7 días.',
-          construir: (lista) => Column(
-            children: [for (final c in lista) _FilaAgenda(control: c)],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Titulo extends StatelessWidget {
-  const _Titulo(this.texto, {this.color});
-
-  final String texto;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        texto,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color),
+    final textos = Theme.of(context).textTheme;
+    final hoy = Fechas.larga(DateTime.now());
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          nombreCorto == null
+              ? saludo(DateTime.now())
+              : '${saludo(DateTime.now())}, $nombreCorto',
+          style: textos.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          hoy[0].toUpperCase() + hoy.substring(1),
+          style: textos.bodyLarge?.copyWith(color: AppColors.grisTexto),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Base de las tarjetas
+// ---------------------------------------------------------------------------
+
+class _Tarjeta extends StatelessWidget {
+  const _Tarjeta({
+    required this.icono,
+    required this.color,
+    required this.titulo,
+    required this.explicacion,
+    required this.child,
+    this.cantidad,
+  });
+
+  final IconData icono;
+  final Color color;
+  final String titulo;
+  final String explicacion;
+  final int? cantidad;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
+    return Card(
+      color: AppColors.blanco,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFDCE7EC)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: color.withValues(alpha: 0.12),
+                  child: Icon(icono, color: color),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: textos.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        explicacion,
+                        style: textos.bodyMedium?.copyWith(
+                          color: AppColors.grisTexto,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (cantidad != null && cantidad! > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$cantidad',
+                      style: const TextStyle(
+                        color: AppColors.blanco,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            child,
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Carga / error / vacío / contenido de una sección.
+/// Carga / error / contenido de una tarjeta.
 class _Contenido<T> extends StatelessWidget {
-  const _Contenido({
-    required this.valor,
-    required this.vacio,
-    required this.construir,
-  });
+  const _Contenido({required this.valor, required this.construir});
 
-  final AsyncValue<List<T>> valor;
-  final String vacio;
-  final Widget Function(List<T>) construir;
+  final AsyncValue<T> valor;
+  final Widget Function(T) construir;
 
   @override
   Widget build(BuildContext context) {
     return valor.when(
+      skipLoadingOnRefresh: true,
+      skipLoadingOnReload: true,
       loading: () => const Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, _) => Text(
-        ApiError.desde(e).mensaje,
-        style: const TextStyle(color: AppColors.error),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          ApiError.desde(e).mensaje,
+          style: const TextStyle(color: AppColors.error),
+        ),
       ),
-      data: (lista) => lista.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                vacio,
-                style: const TextStyle(color: AppColors.grisTexto),
-              ),
-            )
-          : construir(lista),
+      data: construir,
     );
   }
 }
 
-class _FilaMensaje extends ConsumerWidget {
-  const _FilaMensaje({required this.mensaje});
+/// Mensaje tranquilo cuando no hay nada que hacer.
+class _Vacio extends StatelessWidget {
+  const _Vacio(this.texto, {this.icono = Icons.check_circle_outline});
+
+  final String texto;
+  final IconData icono;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icono, color: AppColors.verde, size: 22),
+          const SizedBox(width: 8),
+          Expanded(child: Text(texto, style: const TextStyle(fontSize: 16))),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fila de paciente: nombre grande, detalle y una acción a la derecha.
+class _FilaPaciente extends StatelessWidget {
+  const _FilaPaciente({
+    required this.nombre,
+    required this.detalle,
+    required this.pacienteId,
+    this.accion,
+  });
+
+  final String nombre;
+  final String detalle;
+  final String pacienteId;
+  final Widget? accion;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => context.push(Rutas.paciente(pacienteId)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nombre,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    detalle,
+                    style: const TextStyle(color: AppColors.grisTexto),
+                  ),
+                ],
+              ),
+            ),
+            accion ??
+                const Icon(Icons.chevron_right, color: AppColors.grisTexto),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Enviado extends StatelessWidget {
+  const _Enviado();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.check_circle, color: AppColors.verde, size: 20),
+        SizedBox(width: 4),
+        Text(
+          'Enviado',
+          style: TextStyle(
+            color: AppColors.verdeOscuro,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _dias(int n) => n == 1 ? 'hace 1 día' : 'hace $n días';
+
+String _conHora(String tratamiento, TimeOfDay? hora) =>
+    hora == null ? tratamiento : '$tratamiento · ${Fechas.hora(hora)}';
+
+// ---------------------------------------------------------------------------
+// 1. Recordatorios de mañana
+// ---------------------------------------------------------------------------
+
+class _TarjetaRecordatorios extends ConsumerWidget {
+  const _TarjetaRecordatorios();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final manana = ref.watch(recordatoriosMananaProvider);
+    final fecha = Fechas.larga(Fechas.hoy().add(const Duration(days: 1)));
+    final porEnviar = manana.value?.where((m) => m.porEnviar).length ?? 0;
+
+    return _Tarjeta(
+      icono: Icons.send_rounded,
+      color: AppColors.verdeBoton,
+      titulo: 'Recordatorios de mañana',
+      explicacion: 'Para los citados el $fecha',
+      cantidad: porEnviar,
+      child: _Contenido<List<MensajeRecordatorio>>(
+        valor: manana,
+        construir: (lista) {
+          if (lista.isEmpty) {
+            return const _Vacio(
+              'Mañana no tienes pacientes citados.',
+              icono: Icons.event_available,
+            );
+          }
+          final enviables = lista.where((m) => m.sePuedeEnviar).toList();
+          final enviados = enviables.where((m) => m.enviado).length;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (enviables.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: enviados / enviables.length,
+                    minHeight: 8,
+                    color: AppColors.verde,
+                    backgroundColor: AppColors.celesteFondo,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (porEnviar == 0)
+                  const _Vacio('¡Listo! Ya les recordaste a todos.')
+                else
+                  Text(
+                    'Enviados $enviados de ${enviables.length}',
+                    key: const Key('avance-recordatorios'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.grisTexto,
+                    ),
+                  ),
+              ],
+              const SizedBox(height: 4),
+              for (final m in lista) _FilaRecordatorio(mensaje: m),
+              if (porEnviar > 0) ...[
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  key: const Key('enviar-recordatorios'),
+                  onPressed: () => enviarTodos(context, ref, lista),
+                  icon: const Icon(Icons.send),
+                  label: Text(
+                    porEnviar == 1
+                        ? 'Enviar recordatorio'
+                        : 'Enviar recordatorios ($porEnviar)',
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FilaRecordatorio extends ConsumerWidget {
+  const _FilaRecordatorio({required this.mensaje});
 
   final MensajeRecordatorio mensaje;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final m = mensaje;
-    final esSeguimiento = m.tipo == TipoRecordatorio.seguimiento;
-    final dias = m.diasAtraso == 1 ? 'día' : 'días';
-    final hora = m.hora == null ? '' : ' · ${Fechas.hora(m.hora!)}';
-    final detalle = esSeguimiento
-        ? '${m.tratamiento} · hace ${m.diasAtraso} $dias'
-        : '${m.tratamiento}$hora';
-
     final Widget accion;
     if (!m.sePuedeEnviar) {
       accion = const Text(
-        'No autoriza\nWhatsApp',
-        textAlign: TextAlign.end,
-        style: TextStyle(color: AppColors.grisTexto, fontSize: 13),
+        'Sin WhatsApp',
+        style: TextStyle(color: AppColors.grisTexto),
       );
     } else if (m.enviado) {
-      accion = TextButton.icon(
-        onPressed: () => _enviar(context, ref),
-        icon: const Icon(Icons.check_circle, color: AppColors.verde),
-        label: const Text('Enviado'),
-      );
+      accion = const _Enviado();
     } else {
-      accion = FilledButton(
-        // El tema usa ancho completo; en una fila de lista debe ser compacto.
-        style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
-        onPressed: () => _enviar(context, ref),
-        child: Text(esSeguimiento ? 'Seguimiento' : 'Enviar'),
+      accion = TextButton(
+        onPressed: () => _enviarUno(context, ref, m),
+        child: const Text('Enviar'),
       );
     }
-
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      minTileHeight: 64,
-      title: Text(m.pacienteNombre, style: const TextStyle(fontSize: 17)),
-      subtitle: Text(detalle),
-      trailing: accion,
-      onTap: () => context.push(Rutas.paciente(m.pacienteId)),
+    return _FilaPaciente(
+      nombre: m.pacienteNombre,
+      detalle: _conHora(m.tratamiento, m.hora),
+      pacienteId: m.pacienteId,
+      accion: accion,
     );
-  }
-
-  Future<void> _enviar(BuildContext context, WidgetRef ref) async {
-    final r = await enviarRecordatorio(context, ref, mensaje);
-    refrescarRecordatorios(ref);
-    if (r == ResultadoEnvio.enviado && context.mounted) {
-      mostrarMensaje(context, 'Recordatorio registrado');
-    }
   }
 }
 
-class _FilaAgenda extends StatelessWidget {
-  const _FilaAgenda({required this.control});
+Future<void> _enviarUno(
+  BuildContext context,
+  WidgetRef ref,
+  MensajeRecordatorio m,
+) async {
+  final r = await enviarRecordatorio(context, ref, m);
+  refrescarRecordatorios(ref);
+  if (r == ResultadoEnvio.enviado && context.mounted) {
+    mostrarMensaje(context, 'Mensaje registrado');
+  }
+}
 
-  final Control control;
+// ---------------------------------------------------------------------------
+// 2. Hoy vienen
+// ---------------------------------------------------------------------------
+
+class _TarjetaHoy extends ConsumerWidget {
+  const _TarjetaHoy();
 
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      minTileHeight: 60,
-      title: Text(
-        control.paciente?.nombre ?? '',
-        style: const TextStyle(fontSize: 17),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final agenda = ref.watch(agendaSemanaProvider);
+    final hoy = Fechas.hoy();
+    final deHoy = agenda.value
+        ?.where((c) => DateUtils.isSameDay(c.fecha, hoy))
+        .toList();
+
+    return _Tarjeta(
+      icono: Icons.today,
+      color: AppColors.celeste,
+      titulo: 'Hoy vienen',
+      explicacion: 'Al atenderlos, márcalos como "Asistió" en su ficha',
+      cantidad: deHoy?.length,
+      child: _Contenido<List<Control>>(
+        valor: agenda,
+        construir: (_) => deHoy!.isEmpty
+            ? const _Vacio(
+                'Hoy no hay pacientes citados.',
+                icono: Icons.event_available,
+              )
+            : Column(
+                children: [
+                  for (final c in deHoy)
+                    _FilaPaciente(
+                      nombre: c.paciente?.nombre ?? '',
+                      detalle: _conHora(c.tratamientoNombre, c.hora),
+                      pacienteId: c.pacienteId,
+                    ),
+                ],
+              ),
       ),
-      subtitle: Text('${control.tratamientoNombre} · ${control.fechaTexto()}'),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.push(Rutas.paciente(control.pacienteId)),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 3. No vinieron
+// ---------------------------------------------------------------------------
+
+class _TarjetaNoVinieron extends ConsumerWidget {
+  const _TarjetaNoVinieron();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final seguimientos = ref.watch(seguimientosProvider);
+    return _Tarjeta(
+      icono: Icons.person_search,
+      color: AppColors.error,
+      titulo: 'No vinieron',
+      explicacion: 'Ya pasó su fecha. Escríbeles para que vuelvan',
+      cantidad: seguimientos.value?.length,
+      child: _Contenido<List<MensajeRecordatorio>>(
+        valor: seguimientos,
+        construir: (lista) => lista.isEmpty
+            ? const _Vacio('Todos vinieron a su control.')
+            : Column(
+                children: [
+                  for (final m in lista)
+                    _FilaPaciente(
+                      nombre: m.pacienteNombre,
+                      detalle: '${m.tratamiento} · ${_dias(m.diasAtraso)}',
+                      pacienteId: m.pacienteId,
+                      accion: !m.sePuedeEnviar
+                          ? const Text(
+                              'Sin WhatsApp',
+                              style: TextStyle(color: AppColors.grisTexto),
+                            )
+                          : m.enviado
+                          ? const _Enviado()
+                          : TextButton(
+                              onPressed: () => _enviarUno(context, ref, m),
+                              child: const Text('Escribirle'),
+                            ),
+                    ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 4. Próximos días (plegado)
+// ---------------------------------------------------------------------------
+
+class _TarjetaProximos extends ConsumerWidget {
+  const _TarjetaProximos();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final agenda = ref.watch(agendaSemanaProvider);
+    final hoy = Fechas.hoy();
+    final proximos =
+        agenda.value?.where((c) => c.fecha.isAfter(hoy)).toList() ?? [];
+    final textos = Theme.of(context).textTheme;
+
+    return Card(
+      color: AppColors.blanco,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFDCE7EC)),
+      ),
+      child: ExpansionTile(
+        key: const Key('proximos-dias'),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        leading: CircleAvatar(
+          radius: 20,
+          backgroundColor: AppColors.grisTexto.withValues(alpha: 0.12),
+          child: const Icon(Icons.date_range, color: AppColors.grisTexto),
+        ),
+        title: Text(
+          'Próximos días (${proximos.length})',
+          style: textos.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        subtitle: const Text('Citas de esta semana'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        children: [
+          if (proximos.isEmpty)
+            const _Vacio(
+              'No hay más citas esta semana.',
+              icono: Icons.event_available,
+            ),
+          for (final c in proximos)
+            _FilaPaciente(
+              nombre: c.paciente?.nombre ?? '',
+              detalle: '${c.tratamientoNombre} · ${c.fechaTexto()}',
+              pacienteId: c.pacienteId,
+            ),
+        ],
+      ),
     );
   }
 }

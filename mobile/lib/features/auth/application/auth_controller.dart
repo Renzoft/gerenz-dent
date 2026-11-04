@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/almacen_sesion.dart';
 import '../data/auth_repository.dart';
+import '../data/perfil_repository.dart';
 import '../domain/sesion.dart';
 
 /// Estado de la sesión: `null` = no hay sesión (mostrar login).
@@ -13,7 +16,21 @@ class AuthController extends AsyncNotifier<Usuario?> {
   @override
   Future<Usuario?> build() async {
     final sesion = await ref.read(almacenSesionProvider).leer();
+    if (sesion != null) {
+      // Se abre al instante con los datos guardados y, en segundo plano, se
+      // traen los del servidor (p. ej. si cambió el nombre o la hora del aviso).
+      unawaited(Future.microtask(_sincronizarConServidor));
+    }
     return sesion?.usuario;
+  }
+
+  Future<void> _sincronizarConServidor() async {
+    try {
+      final actual = await ref.read(perfilRepositoryProvider).yo();
+      if (state.value != null) await actualizarUsuario(actual);
+    } catch (_) {
+      // Sin conexión: se siguen usando los datos guardados.
+    }
   }
 
   /// Lanza [ApiError] si las credenciales son incorrectas o no hay conexión.

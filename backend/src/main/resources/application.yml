@@ -60,4 +60,4 @@ app:
   admin-inicial:
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}
-    nombre: ${ADMIN_NOMBRE:Dr. Marco Munayco}
+    nombre: ${ADMIN_NOMBRE:Dr. Marco Munayco Chacón}

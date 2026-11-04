@@ -39,7 +39,7 @@ class PacientesRepositoryFalso extends Mock implements PacientesRepository {}
 
 const usuarioPrueba = Usuario(
   id: 'u-1',
-  nombre: 'Dr. Marco Munayco',
+  nombre: 'Dr. Marco Munayco Chacón',
   email: 'doctor@gerenzdent.test',
 );
 
@@ -120,10 +120,8 @@ class RecordatoriosRepositoryFalso extends Mock
 /// Registra las llamadas en lugar de mostrar notificaciones reales.
 class ServicioAvisosFalso implements ServicioAvisos {
   final programaciones = <({TimeOfDay hora, int? pendientesHoy})>[];
-  var pruebas = 0;
   var cancelados = 0;
   bool permiso = true;
-  bool errorAlProbar = false;
 
   @override
   Future<void> inicializar() async {}
@@ -137,12 +135,6 @@ class ServicioAvisosFalso implements ServicioAvisos {
 
   @override
   Future<void> cancelarTodos() async => cancelados++;
-
-  @override
-  Future<void> probar() async {
-    if (errorAlProbar) throw Exception('invalid_icon');
-    pruebas++;
-  }
 }
 
 /// Simula abrir WhatsApp y volver a la app al instante.

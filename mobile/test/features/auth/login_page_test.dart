@@ -65,7 +65,7 @@ void main() {
     expect(almacen.sesion?.accessToken, 'access-1');
     expect(
       contenedor.read(authControllerProvider).value?.nombre,
-      'Dr. Marco Munayco',
+      'Dr. Marco Munayco Chacón',
     );
   });
 

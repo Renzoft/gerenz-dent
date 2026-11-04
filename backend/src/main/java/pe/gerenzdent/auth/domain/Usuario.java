@@ -14,7 +14,7 @@ import pe.gerenzdent.shared.domain.EntidadAuditable;
 @Table(name = "usuario")
 public class Usuario extends EntidadAuditable {
 
-  private static final LocalTime HORA_NOTIFICACION_POR_DEFECTO = LocalTime.of(17, 30);
+  private static final LocalTime HORA_NOTIFICACION_POR_DEFECTO = LocalTime.of(16, 30);
 
   @Column(nullable = false, length = 120)
   private String email;

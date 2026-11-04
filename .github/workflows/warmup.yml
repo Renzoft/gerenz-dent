@@ -1,10 +1,10 @@
 name: warmup
 
-# Despierta la API en Render antes de la notificación diaria de las 17:30 (ADR-003).
-# 22:15 UTC = 17:15 en Lima (UTC-5, sin horario de verano).
+# Despierta la API en Render antes de la notificación diaria de las 16:30 (ADR-003).
+# 21:15 UTC = 16:15 en Lima (UTC-5, sin horario de verano).
 on:
   schedule:
-    - cron: "15 22 * * *"
+    - cron: "15 21 * * *"
   workflow_dispatch:
 
 permissions: {}

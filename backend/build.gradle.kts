@@ -48,7 +48,10 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+// La JVM siempre en UTC, igual que en producción (Dockerfile). Si no, Hibernate convierte las
+// columnas TIME (hora del aviso, hora del control) con la zona de la PC y las guarda corridas.
 tasks.withType<Test> {
+    systemProperty("user.timezone", "UTC")
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }
@@ -73,6 +76,7 @@ spotless {
 // En local, `./gradlew bootRun` usa el perfil dev (secreto JWT y usuario de prueba).
 tasks.bootRun {
     systemProperty("spring.profiles.active", "dev")
+    systemProperty("user.timezone", "UTC")
 }
 
 // El JAR "plain" no se usa; solo el ejecutable de Spring Boot.
