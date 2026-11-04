@@ -42,7 +42,7 @@ class AjustesPage extends ConsumerWidget {
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('GERENZ DENT'),
-            subtitle: Text('Versión 0.2.0 · ${Env.apiUrl}'),
+            subtitle: Text('Versión 0.3.0 · ${Env.apiUrl}'),
           ),
         ],
       ),

@@ -30,10 +30,10 @@ class GerenzdentApiApplicationTests extends PruebaIntegracion {
     Integer tablas =
         jdbc.queryForObject(
             "SELECT count(*) FROM information_schema.tables"
-                + " WHERE table_name IN ('usuario', 'refresh_token', 'paciente')",
+                + " WHERE table_name IN ('usuario', 'refresh_token', 'paciente', 'tratamiento', 'plan_tratamiento', 'control')",
             Integer.class);
     assertThat(extensiones).isEqualTo(1);
-    assertThat(tablas).isEqualTo(3);
+    assertThat(tablas).isEqualTo(6);
   }
 
   @Test

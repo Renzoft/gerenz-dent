@@ -114,7 +114,8 @@ class _FormularioState extends ConsumerState<_Formulario> {
         _esNuevo ? 'Paciente registrado' : 'Cambios guardados',
       );
       if (_esNuevo) {
-        context.pushReplacement(Rutas.paciente(guardado.id));
+        // Registrar paciente + próximo control en un solo flujo (≤ 30 s).
+        context.pushReplacement(Rutas.paciente(guardado.id, agendar: true));
       } else {
         context.pop();
       }
