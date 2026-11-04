@@ -6,23 +6,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.web.servlet.MockMvc;
 
-@Import(TestcontainersConfiguration.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-class GerenzdentApiApplicationTests {
-
-  @Autowired MockMvc mockMvc;
-  @Autowired JdbcTemplate jdbc;
+class GerenzdentApiApplicationTests extends PruebaIntegracion {
 
   @Test
-  void healthRespondeUp() throws Exception {
+  void healthRespondeUpSinAutenticacion() throws Exception {
     mockMvc
         .perform(get("/actuator/health"))
         .andExpect(status().isOk())
@@ -35,15 +23,30 @@ class GerenzdentApiApplicationTests {
   }
 
   @Test
-  void flywayAplicoLaMigracionInicial() {
+  void flywayAplicoTodasLasMigraciones() {
     Integer extensiones =
         jdbc.queryForObject(
             "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'", Integer.class);
+    Integer tablas =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM information_schema.tables"
+                + " WHERE table_name IN ('usuario', 'refresh_token', 'paciente')",
+            Integer.class);
     assertThat(extensiones).isEqualTo(1);
+    assertThat(tablas).isEqualTo(3);
   }
 
   @Test
-  void endpointsDeActuatorSensiblesNoEstanExpuestos() throws Exception {
-    mockMvc.perform(get("/actuator/env")).andExpect(status().isNotFound());
+  void endpointsSensiblesDeActuatorNoSonAccesibles() throws Exception {
+    mockMvc.perform(get("/actuator/env")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void rutasDeLaApiExigenAutenticacionConFormatoProblemDetails() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/pacientes"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.title").value("No autenticado"));
   }
 }

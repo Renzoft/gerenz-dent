@@ -16,7 +16,7 @@ class SaludRepository {
 }
 
 final saludRepositoryProvider = Provider<SaludRepository>(
-  (ref) => SaludRepository(ref.watch(dioProvider)),
+  (ref) => SaludRepository(ref.watch(dioBaseProvider)),
 );
 
 /// `true` si la API respondió "UP". Si falla, el estado queda en error y la

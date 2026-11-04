@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gerenz_dent/core/theme/app_theme.dart';
+import 'package:gerenz_dent/features/auth/data/almacen_sesion.dart';
 import 'package:gerenz_dent/features/inicio/data/salud_repository.dart';
 import 'package:gerenz_dent/features/inicio/presentation/inicio_page.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../helpers/fakes.dart';
 
 class _SaludRepositoryFalso extends Mock implements SaludRepository {}
 
@@ -16,7 +19,12 @@ void main() {
   Future<void> montar(WidgetTester tester) {
     return tester.pumpWidget(
       ProviderScope(
-        overrides: [saludRepositoryProvider.overrideWithValue(repositorio)],
+        overrides: [
+          saludRepositoryProvider.overrideWithValue(repositorio),
+          almacenSesionProvider.overrideWithValue(
+            AlmacenSesionMemoria(sesionPrueba()),
+          ),
+        ],
         child: MaterialApp(theme: AppTheme.claro, home: const InicioPage()),
       ),
     );

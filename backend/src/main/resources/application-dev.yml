@@ -1,0 +1,9 @@
+# Perfil SOLO para desarrollo local (./gradlew bootRun). Nunca se usa en producción.
+# Los valores son de prueba y públicos a propósito.
+app:
+  seguridad:
+    jwt-secreto: dev-secreto-local-no-usar-en-produccion-0123456789
+  admin-inicial:
+    email: doctor@gerenzdent.test
+    password: clave-de-prueba-123
+    nombre: Dr. Marco Munayco
