@@ -49,4 +49,14 @@ class GerenzdentApiApplicationTests extends PruebaIntegracion {
         .andExpect(jsonPath("$.status").value(401))
         .andExpect(jsonPath("$.title").value("No autenticado"));
   }
+
+  @Test
+  void elAvisoDiarioEsALas1630PorDefecto() {
+    jdbc.update(
+        "INSERT INTO usuario (email, password_hash, nombre) VALUES ('x@y.z', 'h', 'Dr. Prueba')");
+    String hora =
+        jdbc.queryForObject(
+            "SELECT hora_notificacion::text FROM usuario WHERE email = 'x@y.z'", String.class);
+    assertThat(hora).isEqualTo("16:30:00");
+  }
 }

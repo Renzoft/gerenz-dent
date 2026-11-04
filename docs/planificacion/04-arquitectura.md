@@ -24,14 +24,14 @@ flowchart LR
     WA -- mensaje --> P((Paciente))
     GH -- deploy --> API
     GH -- pg_dump cifrado --> DB
-    GH -- "ping 17:15" --> API
+    GH -- "ping 16:15" --> API
 ```
 
 ### Flujo diario del recordatorio (Opción C)
 
 ```mermaid
 sequenceDiagram
-    participant N as Notificación local (17:30)
+    participant N as Notificación local (16:30)
     participant A as App Flutter
     participant S as API Spring Boot
     participant W as WhatsApp
@@ -171,7 +171,7 @@ GerenzDent/
 - **Implementación (iteración 3):** `flutter_local_notifications` programa 14 avisos (uno por día) a la hora
   elegida en **America/Lima**, sin importar la zona del teléfono. Usa alarma exacta (`USE_EXACT_ALARM`): la app
   se instala por APK, fuera de Play Store; si se publicara allí habría que revisar esa política. Sin alarma
-  exacta, Android podría retrasar el aviso hasta 1 hora (hasta las 6:30 p. m., ya con pacientes).
+  exacta, Android podría retrasar el aviso hasta 1 hora (hasta una hora después de lo programado).
 - **Limitación aceptada:** como el aviso no consulta al servidor, solo el de hoy muestra la cantidad real de
   pacientes por recordar (se calcula al abrir la app); los demás días usan un texto general.
 
@@ -195,6 +195,13 @@ GerenzDent/
 - **Consecuencia:** los oyentes corren en la misma transacción; si generar el cargo falla (p. ej. un pago
   inicial mayor al costo), no se guarda ni el control: todo o nada.
 - **Datos existentes:** la migración V7 crea los cargos de los planes anteriores con el precio del catálogo.
+
+### ADR-008 · La JVM siempre en UTC (v1.1)
+- **Problema:** Hibernate convierte las columnas `TIME` (hora del aviso, hora del control) con la zona de la
+  JVM. En la PC de desarrollo (zona Lima) las guardaba 5 horas corridas; en producción (Docker en UTC) no.
+  Cualquier SQL directo sobre esas horas (como la migración V8) se comportaba distinto en local.
+- **Decisión:** `user.timezone=UTC` también en `bootRun` y en las pruebas, igual que en el Dockerfile.
+  "Hoy" en Lima lo sigue calculando `Calendario`.
 
 ### ADR-005 · Online-first
 - **Decisión:** sin base de datos local en el MVP; solo caché en memoria.

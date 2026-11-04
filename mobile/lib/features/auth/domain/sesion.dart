@@ -20,8 +20,16 @@ class Usuario {
         horaAvisoPorDefecto,
   );
 
-  /// 5:30 p. m.: antes de que abra el consultorio (L–V desde las 6 p. m.).
-  static const horaAvisoPorDefecto = TimeOfDay(hour: 17, minute: 30);
+  /// 4:30 p. m.: los pacientes reciben el recordatorio con tiempo, antes de
+  /// que abra el consultorio (L–V desde las 6 p. m.).
+  static const horaAvisoPorDefecto = TimeOfDay(hour: 16, minute: 30);
+
+  /// "Dr. Marco Munayco Chacón" → "Dr. Marco" (para el saludo).
+  String get nombreCorto {
+    final partes = nombre.trim().split(RegExp(r'\s+'));
+    final conTitulo = partes.isNotEmpty && partes.first.endsWith('.');
+    return partes.take(conTitulo ? 2 : 1).join(' ');
+  }
 
   final String id;
   final String nombre;

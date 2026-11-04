@@ -65,9 +65,6 @@ abstract class ServicioAvisos {
   Future<void> programar({required TimeOfDay hora, int? pendientesHoy});
 
   Future<void> cancelarTodos();
-
-  /// Muestra un aviso de prueba ahora mismo.
-  Future<void> probar();
 }
 
 class ServicioAvisosLocal implements ServicioAvisos {
@@ -158,17 +155,6 @@ class ServicioAvisosLocal implements ServicioAvisos {
   Future<void> cancelarTodos() async {
     await inicializar();
     await _plugin.cancelAll();
-  }
-
-  @override
-  Future<void> probar() async {
-    await inicializar();
-    await _plugin.show(
-      id: 1,
-      title: _titulo,
-      body: 'Así se verá el aviso diario de recordatorios.',
-      notificationDetails: _detalles,
-    );
   }
 }
 

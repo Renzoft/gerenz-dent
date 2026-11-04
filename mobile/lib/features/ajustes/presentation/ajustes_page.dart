@@ -66,26 +66,6 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
     } catch (_) {}
   }
 
-  Future<void> _probarAviso() async {
-    final avisos = ref.read(servicioAvisosProvider);
-    try {
-      final permitido = await avisos.pedirPermiso();
-      if (!permitido) {
-        if (mounted) {
-          mostrarMensaje(
-            context,
-            'Activa las notificaciones de GERENZ DENT en los ajustes del teléfono.',
-          );
-        }
-        return;
-      }
-      await avisos.probar();
-    } catch (e) {
-      // Antes fallaba en silencio: ahora se ve el motivo.
-      if (mounted) mostrarMensaje(context, 'No se pudo mostrar el aviso: $e');
-    }
-  }
-
   Future<void> _cerrarSesion() async {
     final ok = await confirmar(
       context,
@@ -139,13 +119,6 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.notification_add_outlined),
-            title: const Text('Probar aviso'),
-            subtitle: const Text('Muestra ahora un aviso de ejemplo'),
-            onTap: _probarAviso,
-          ),
-          const Divider(),
-          ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Cerrar sesión'),
             onTap: _cerrarSesion,
@@ -154,7 +127,7 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('GERENZ DENT'),
-            subtitle: Text('Versión 1.0.0 · ${Env.apiUrl}'),
+            subtitle: Text('Versión 1.1.0 · ${Env.apiUrl}'),
           ),
         ],
       ),

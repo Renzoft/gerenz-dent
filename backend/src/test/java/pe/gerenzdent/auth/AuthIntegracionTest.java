@@ -41,7 +41,7 @@ class AuthIntegracionTest extends PruebaIntegracion {
         .andExpect(jsonPath("$.expiraEnSegundos").value(900))
         .andExpect(jsonPath("$.usuario.email").value(EMAIL))
         .andExpect(
-            jsonPath("$.usuario.horaNotificacion").value(org.hamcrest.Matchers.startsWith("17:30")))
+            jsonPath("$.usuario.horaNotificacion").value(org.hamcrest.Matchers.startsWith("16:30")))
         .andExpect(jsonPath("$.usuario.passwordHash").doesNotExist());
   }
 

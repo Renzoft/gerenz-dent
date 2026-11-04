@@ -72,7 +72,7 @@ Prioridad MoSCoW: **M** = Must (MVP), **S** = Should (MVP si alcanza), **C** = C
 | HU-17 | Como doctor quiero que la app marque el control como "recordado" después de enviarlo. | M |
 | HU-18 | Como doctor quiero ver los controles **vencidos** (pasó la fecha y no vino) y enviarles un mensaje de seguimiento. | M |
 | HU-19 | Como doctor quiero marcar "confirmó" cuando el paciente responda "SÍ" en WhatsApp. | M |
-| HU-20 | Como doctor quiero configurar la hora de la notificación diaria (por defecto **5:30 p. m.**, antes de abrir el consultorio). | S |
+| HU-20 | Como doctor quiero configurar la hora de la notificación diaria (por defecto **4:30 p. m.**, para avisar a los pacientes con tiempo; cambiado de 5:30 en la v1.1). | S |
 
 **Criterios de aceptación**
 - La notificación es **local** (programada en el teléfono) → funciona aunque el servidor esté dormido.

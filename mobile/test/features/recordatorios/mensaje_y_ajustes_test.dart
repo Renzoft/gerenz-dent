@@ -48,13 +48,13 @@ void main() {
     expect(m.porEnviar, isFalse);
   });
 
-  test('el usuario guarda la hora del aviso y usa 5:30 p. m. por defecto', () {
+  test('el usuario guarda la hora del aviso y usa 4:30 p. m. por defecto', () {
     final sinHora = Usuario.fromJson({
       'id': 'u',
       'nombre': 'Dr. X',
       'email': 'x@y.z',
     });
-    expect(sinHora.horaNotificacion, const TimeOfDay(hour: 17, minute: 30));
+    expect(sinHora.horaNotificacion, const TimeOfDay(hour: 16, minute: 30));
 
     final ida = sinHora.conHora(const TimeOfDay(hour: 17, minute: 45)).toJson();
     expect(Usuario.fromJson(ida).horaNotificacion.minute, 45);
@@ -81,34 +81,12 @@ void main() {
 
     testWidgets('muestra la hora del aviso diario', (tester) async {
       await montar(tester);
-      expect(find.text('Todos los días a las 5:30 p. m.'), findsOneWidget);
+      expect(find.text('Todos los días a las 4:30 p. m.'), findsOneWidget);
     });
 
-    testWidgets('"Probar aviso" muestra un aviso de ejemplo', (tester) async {
+    testWidgets('ya no ofrece "Probar aviso"', (tester) async {
       await montar(tester);
-      await tester.tap(find.text('Probar aviso'));
-      await tester.pumpAndSettle();
-      expect(avisos.pruebas, 1);
-    });
-
-    testWidgets('sin permiso explica cómo activarlo', (tester) async {
-      await montar(tester);
-      avisos.permiso = false;
-      await tester.tap(find.text('Probar aviso'));
-      await tester.pumpAndSettle();
-      expect(avisos.pruebas, 0);
-      expect(find.textContaining('Activa las notificaciones'), findsOneWidget);
-    });
-
-    testWidgets('si el aviso falla, muestra el motivo', (tester) async {
-      await montar(tester);
-      avisos.errorAlProbar = true;
-      await tester.tap(find.text('Probar aviso'));
-      await tester.pumpAndSettle();
-      expect(
-        find.textContaining('No se pudo mostrar el aviso'),
-        findsOneWidget,
-      );
+      expect(find.text('Probar aviso'), findsNothing);
     });
   });
 }

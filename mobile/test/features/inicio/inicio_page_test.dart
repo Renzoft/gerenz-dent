@@ -6,6 +6,7 @@ import 'package:gerenz_dent/core/avisos/envio_whatsapp.dart';
 import 'package:gerenz_dent/core/formato/fechas.dart';
 import 'package:gerenz_dent/core/theme/app_theme.dart';
 import 'package:gerenz_dent/features/auth/data/almacen_sesion.dart';
+import 'package:gerenz_dent/features/auth/data/perfil_repository.dart';
 import 'package:gerenz_dent/features/controles/data/controles_repository.dart';
 import 'package:gerenz_dent/features/controles/domain/control.dart';
 import 'package:gerenz_dent/features/inicio/data/salud_repository.dart';
@@ -19,12 +20,15 @@ import '../../helpers/fakes.dart';
 
 class _SaludRepositoryFalso extends Mock implements SaludRepository {}
 
+class _PerfilFalso extends Mock implements PerfilRepository {}
+
 void main() {
   late _SaludRepositoryFalso salud;
   late ControlesRepositoryFalso controles;
   late RecordatoriosRepositoryFalso recordatorios;
   late ServicioAvisosFalso avisos;
   late EnvioWhatsappFalso whatsapp;
+  late _PerfilFalso perfil;
 
   setUpAll(() async {
     await initializeDateFormatting('es_PE');
@@ -37,6 +41,7 @@ void main() {
     recordatorios = RecordatoriosRepositoryFalso();
     avisos = ServicioAvisosFalso();
     whatsapp = EnvioWhatsappFalso();
+    perfil = _PerfilFalso();
     when(() => salud.servidorDisponible()).thenAnswer((_) async => true);
     when(() => controles.agenda()).thenAnswer((_) async => <Control>[]);
     when(() => recordatorios.pendientes()).thenAnswer((_) async => []);
@@ -44,6 +49,7 @@ void main() {
     when(
       () => recordatorios.registrarEnvio(any(), any()),
     ).thenAnswer((_) async {});
+    when(() => perfil.yo()).thenAnswer((_) async => usuarioPrueba);
   });
 
   Widget app() => ProviderScope(
@@ -53,6 +59,7 @@ void main() {
       recordatoriosRepositoryProvider.overrideWithValue(recordatorios),
       servicioAvisosProvider.overrideWithValue(avisos),
       envioWhatsappProvider.overrideWithValue(whatsapp),
+      perfilRepositoryProvider.overrideWithValue(perfil),
       almacenSesionProvider.overrideWithValue(
         AlmacenSesionMemoria(sesionPrueba()),
       ),
@@ -64,6 +71,12 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
   }
+
+  PacienteDelControl paciente(String nombre) => PacienteDelControl(
+    id: 'p-$nombre',
+    nombre: nombre,
+    whatsapp: '+51987654321',
+  );
 
   testWidgets('muestra "Conectando…" mientras espera al servidor', (
     tester,
@@ -96,22 +109,21 @@ void main() {
     expect(llamadas, 2);
   });
 
-  testWidgets('saluda al doctor y muestra las secciones vacías', (
+  testWidgets('saluda con el nombre corto y explica cada tarjeta vacía', (
     tester,
   ) async {
     await montar(tester);
 
-    expect(find.text('Bienvenido, Dr. Marco Munayco'), findsOneWidget);
-    expect(find.text('Recordar para mañana (0)'), findsOneWidget);
-    expect(find.text('No hay controles para mañana.'), findsOneWidget);
-    expect(find.text('Vencidos (0)'), findsOneWidget);
-    // Sin nada por enviar, el aviso de hoy no se programa con cantidad > 0.
-    expect(avisos.programaciones.last.pendientesHoy, 0);
+    expect(find.textContaining(', Dr. Marco'), findsOneWidget);
+    expect(find.textContaining('Chacón'), findsNothing);
+    expect(find.text('Recordatorios de mañana'), findsOneWidget);
+    expect(find.text('Mañana no tienes pacientes citados.'), findsOneWidget);
+    expect(find.text('Hoy no hay pacientes citados.'), findsOneWidget);
+    expect(find.text('Todos vinieron a su control.'), findsOneWidget);
+    expect(find.text('Próximos días (0)'), findsOneWidget);
   });
 
-  testWidgets('lista los recordatorios de mañana según su estado', (
-    tester,
-  ) async {
+  testWidgets('recordatorios: avance, estados y botón grande', (tester) async {
     when(() => recordatorios.pendientes()).thenAnswer(
       (_) async => [
         mensajePrueba(controlId: 'c-1', paciente: 'Juan Pérez'),
@@ -126,36 +138,42 @@ void main() {
     );
     await montar(tester);
 
-    expect(find.text('Recordar para mañana (4)'), findsOneWidget);
+    expect(find.text('Enviados 1 de 3'), findsOneWidget);
     expect(find.text('Enviar'), findsNWidgets(2));
     expect(find.text('Enviado'), findsOneWidget);
-    expect(find.text('No autoriza\nWhatsApp'), findsOneWidget);
-    expect(find.text('Enviar todos uno por uno (2)'), findsOneWidget);
+    expect(find.text('Sin WhatsApp'), findsOneWidget);
+    expect(find.text('Enviar recordatorios (2)'), findsOneWidget);
     // El aviso de hoy se programa con los que faltan enviar.
     expect(avisos.programaciones.last.pendientesHoy, 2);
   });
 
-  testWidgets('"Enviar" abre WhatsApp y registra el envío al confirmar', (
-    tester,
-  ) async {
+  testWidgets('cuando ya se envió todo dice "¡Listo!"', (tester) async {
     when(
       () => recordatorios.pendientes(),
-    ).thenAnswer((_) async => [mensajePrueba()]);
+    ).thenAnswer((_) async => [mensajePrueba(enviado: true)]);
     await montar(tester);
 
-    await tester.tap(find.text('Enviar'));
+    expect(find.text('¡Listo! Ya les recordaste a todos.'), findsOneWidget);
+    expect(find.byKey(const Key('enviar-recordatorios')), findsNothing);
+  });
+
+  testWidgets('"Enviar" abre WhatsApp y registra al confirmar', (tester) async {
+    when(() => recordatorios.pendientes()).thenAnswer(
+      (_) async => [mensajePrueba(), mensajePrueba(controlId: 'c-2')],
+    );
+    await montar(tester);
+
+    await tester.tap(find.text('Enviar').first);
     await tester.pumpAndSettle();
 
     expect(whatsapp.abiertos, ['https://wa.me/51987654321?text=Hola']);
-    expect(find.text('¿Se envió el mensaje a Juan Pérez?'), findsOneWidget);
-
     await tester.tap(find.text('Sí, se envió'));
     await tester.pumpAndSettle();
 
     verify(
       () => recordatorios.registrarEnvio('c-1', TipoRecordatorio.previo),
     ).called(1);
-    expect(find.text('Recordatorio registrado'), findsOneWidget);
+    expect(find.text('Mensaje registrado'), findsOneWidget);
   });
 
   testWidgets('si responde "No", no se registra', (tester) async {
@@ -164,7 +182,7 @@ void main() {
     ).thenAnswer((_) async => [mensajePrueba()]);
     await montar(tester);
 
-    await tester.tap(find.text('Enviar'));
+    await tester.tap(find.text('Enviar recordatorio'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('No'));
     await tester.pumpAndSettle();
@@ -172,53 +190,67 @@ void main() {
     verifyNever(() => recordatorios.registrarEnvio(any(), any()));
   });
 
-  testWidgets('"Enviar todos" recorre los pendientes uno por uno', (
+  testWidgets('el botón grande envía uno por uno y "Detener" corta', (
     tester,
   ) async {
     when(() => recordatorios.pendientes()).thenAnswer(
       (_) async => [
         mensajePrueba(controlId: 'c-1', paciente: 'Juan Pérez'),
         mensajePrueba(controlId: 'c-2', paciente: 'Ana Ríos'),
+        mensajePrueba(controlId: 'c-3', paciente: 'Eva Paz'),
       ],
     );
     await montar(tester);
 
-    await tester.tap(find.text('Enviar todos uno por uno (2)'));
+    await tester.tap(find.text('Enviar recordatorios (3)'));
     await tester.pumpAndSettle();
     expect(find.text('¿Se envió el mensaje a Juan Pérez?'), findsOneWidget);
-    expect(find.text('Detener'), findsOneWidget); // todavía queda Ana
     await tester.tap(find.text('Sí, se envió'));
     await tester.pumpAndSettle();
-
     expect(find.text('¿Se envió el mensaje a Ana Ríos?'), findsOneWidget);
-    await tester.tap(find.text('Sí, se envió'));
+    await tester.tap(find.text('Detener'));
     await tester.pumpAndSettle();
 
     expect(whatsapp.abiertos, hasLength(2));
     verify(() => recordatorios.registrarEnvio('c-1', any())).called(1);
-    verify(() => recordatorios.registrarEnvio('c-2', any())).called(1);
-    expect(find.text('2 recordatorios enviados'), findsOneWidget);
+    verifyNever(() => recordatorios.registrarEnvio('c-2', any()));
+    expect(find.text('1 recordatorio enviado'), findsOneWidget);
   });
 
-  testWidgets('"Detener" corta el envío en lote', (tester) async {
-    when(() => recordatorios.pendientes()).thenAnswer(
+  testWidgets('"Hoy vienen" lista los citados de hoy', (tester) async {
+    // Pantalla alta, como un celular: todas las tarjetas a la vista.
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    when(() => controles.agenda()).thenAnswer(
       (_) async => [
-        mensajePrueba(controlId: 'c-1', paciente: 'Juan Pérez'),
-        mensajePrueba(controlId: 'c-2', paciente: 'Ana Ríos'),
+        controlPrueba(
+          id: 'c-hoy',
+          pacienteId: 'p-rosa',
+          paciente: paciente('Rosa Quispe'),
+          fecha: Fechas.hoy(),
+        ),
+        controlPrueba(
+          id: 'c-luego',
+          pacienteId: 'p-juan',
+          paciente: paciente('Juan Pérez'),
+          fecha: Fechas.hoy().add(const Duration(days: 3)),
+        ),
       ],
     );
     await montar(tester);
 
-    await tester.tap(find.text('Enviar todos uno por uno (2)'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Detener'));
-    await tester.pumpAndSettle();
+    expect(find.text('Rosa Quispe'), findsOneWidget);
+    // Los de otros días quedan plegados en "Próximos días".
+    expect(find.text('Juan Pérez'), findsNothing);
+    expect(find.text('Próximos días (1)'), findsOneWidget);
 
-    expect(whatsapp.abiertos, hasLength(1));
-    verifyNever(() => recordatorios.registrarEnvio(any(), any()));
+    await tester.tap(find.text('Próximos días (1)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Juan Pérez'), findsOneWidget);
   });
 
-  testWidgets('los vencidos ofrecen enviar un seguimiento', (tester) async {
+  testWidgets('"No vinieron" ofrece escribirles', (tester) async {
     when(() => recordatorios.seguimientos()).thenAnswer(
       (_) async => [
         mensajePrueba(
@@ -231,10 +263,8 @@ void main() {
     );
     await montar(tester);
 
-    expect(find.text('Vencidos (1)'), findsOneWidget);
     expect(find.text('Brackets (ortodoncia) · hace 3 días'), findsOneWidget);
-
-    await tester.tap(find.text('Seguimiento'));
+    await tester.tap(find.text('Escribirle'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sí, se envió'));
     await tester.pumpAndSettle();
@@ -244,27 +274,6 @@ void main() {
     ).called(1);
   });
 
-  testWidgets('muestra los próximos 7 días con su paciente', (tester) async {
-    when(() => controles.agenda()).thenAnswer(
-      (_) async => [
-        controlPrueba(
-          id: 'c-m',
-          pacienteId: 'p-juan',
-          paciente: const PacienteDelControl(
-            id: 'p-juan',
-            nombre: 'Juan Pérez',
-            whatsapp: '+51987654321',
-          ),
-          fecha: Fechas.hoy().add(const Duration(days: 2)),
-        ),
-      ],
-    );
-    await montar(tester);
-
-    expect(find.text('Próximos 7 días (1)'), findsOneWidget);
-    expect(find.text('Juan Pérez'), findsOneWidget);
-  });
-
   testWidgets('si WhatsApp no abre, avisa y no pregunta', (tester) async {
     whatsapp = EnvioWhatsappFalso(exito: false);
     when(
@@ -272,7 +281,7 @@ void main() {
     ).thenAnswer((_) async => [mensajePrueba()]);
     await montar(tester);
 
-    await tester.tap(find.text('Enviar'));
+    await tester.tap(find.text('Enviar recordatorio'));
     await tester.pumpAndSettle();
 
     expect(find.text('No se pudo abrir WhatsApp.'), findsOneWidget);

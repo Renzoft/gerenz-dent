@@ -183,15 +183,29 @@ class _FichaState extends ConsumerState<_Ficha> {
         const SizedBox(height: 24),
         SeccionCuenta(pacienteId: p.id),
         const SizedBox(height: 16),
-        Text('Datos', style: textos.titleMedium),
-        const SizedBox(height: 8),
+        // Plegado: se completa pocas veces y ocupa espacio. La alergia ya se
+        // muestra arriba como alerta.
         Card(
-          child: Column(
+          child: ExpansionTile(
+            key: const Key('datos-paciente'),
+            shape: const Border(),
+            collapsedShape: const Border(),
+            leading: const Icon(
+              Icons.badge_outlined,
+              color: AppColors.verdeOscuro,
+            ),
+            title: const Text('Datos del paciente'),
+            subtitle: Text(_resumenDatos(p)),
             children: [
               _Dato(
                 icono: Icons.cake_outlined,
                 etiqueta: 'Edad',
                 valor: p.edad == null ? '—' : '${p.edad} años',
+              ),
+              _Dato(
+                icono: Icons.healing_outlined,
+                etiqueta: 'Alergias',
+                valor: p.alergias ?? 'Ninguna registrada',
               ),
               _Dato(icono: Icons.notes, etiqueta: 'Nota', valor: p.nota ?? '—'),
               _Dato(
@@ -277,6 +291,16 @@ class _SeccionControles extends ConsumerWidget {
       },
     );
   }
+}
+
+/// "40 años · WhatsApp autorizado" (lo que se ve con la sección plegada).
+String _resumenDatos(Paciente p) {
+  final partes = <String>[
+    if (p.edad != null) '${p.edad} años',
+    p.consienteWhatsapp ? 'WhatsApp autorizado' : 'Sin WhatsApp',
+    if (p.nota != null) 'con nota',
+  ];
+  return partes.join(' · ');
 }
 
 class _Dato extends StatelessWidget {
