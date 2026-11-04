@@ -2,16 +2,28 @@
 
 Costo: S/ 0. Se hace **una sola vez**; después cada merge a `main` con el CI en verde se despliega solo.
 
+## Producción (desplegado el 2026-11-04)
+
+| Recurso | Valor |
+|---|---|
+| API | <https://gerenzdent-api.onrender.com> · salud: [`/actuator/health`](https://gerenzdent-api.onrender.com/actuator/health) |
+| Render | Blueprint `gerenz-dent` → servicio `gerenzdent-api` (Docker, Free, Virginia) |
+| Neon | Proyecto `gerenz-dent` · rama `production` · BD `neondb` · AWS US East 1 · conexión con pooler |
+| GitHub | Variable `API_URL` configurada → workflow `warmup` activo (17:15 Lima) |
+
+Las credenciales viven solo en Neon y en las variables de entorno de Render.
+
 ## 1. Base de datos en Neon
 
 1. Crear cuenta en <https://neon.tech> (puedes entrar con GitHub).
-2. **New project** → nombre `gerenz-dent`, PostgreSQL **17**, región **AWS US East (N. Virginia)**.
-3. Crear la base de datos `gerenzdent` (o renombrar la que viene por defecto).
+2. **New project** → nombre `gerenz-dent`, PostgreSQL **17**, región **AWS US East (N. Virginia)**, solo Postgres
+   (sin Auth, Functions ni otros servicios; tampoco hace falta la CLI ni la skill de Neon).
+3. Usar la base de datos por defecto `neondb`.
 4. En **Connect**, activar **Connection pooling** y copiar los datos. Se arman así:
 
    | Variable | Valor |
    |---|---|
-   | `DB_URL` | `jdbc:postgresql://<host-con-pooler>.neon.tech/gerenzdent?sslmode=require` |
+   | `DB_URL` | `jdbc:postgresql://<host-con-pooler>.neon.tech/neondb?sslmode=require` |
    | `DB_USER` | el usuario que muestra Neon |
    | `DB_PASSWORD` | la contraseña que muestra Neon |
 
