@@ -1,0 +1,25 @@
+# Blueprint de Render: https://render.com/docs/blueprint-spec
+# Los secretos (sync: false) se ingresan en el panel de Render, nunca en este archivo.
+services:
+  - type: web
+    name: gerenzdent-api
+    runtime: docker
+    plan: free
+    region: virginia            # misma región que Neon (AWS us-east-1) → menor latencia API ↔ BD
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    branch: main
+    autoDeployTrigger: checksPass   # despliega solo si el CI de GitHub pasó
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_URL               # jdbc:postgresql://<host-pooler>.neon.tech/gerenzdent?sslmode=require
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_POOL_SIZE
+        value: "3"
+      - key: API_DOCS_ENABLED     # Swagger desactivado en producción
+        value: "false"
