@@ -6,6 +6,8 @@ import 'package:gerenz_dent/features/auth/data/almacen_sesion.dart';
 import 'package:gerenz_dent/features/auth/data/auth_repository.dart';
 import 'package:gerenz_dent/features/auth/domain/sesion.dart';
 import 'package:gerenz_dent/features/controles/data/controles_repository.dart';
+import 'package:gerenz_dent/features/cuenta/data/cuenta_repository.dart';
+import 'package:gerenz_dent/features/cuenta/domain/cuenta.dart';
 import 'package:gerenz_dent/features/controles/domain/control.dart';
 import 'package:gerenz_dent/features/pacientes/data/pacientes_repository.dart';
 import 'package:gerenz_dent/features/pacientes/domain/paciente.dart';
@@ -98,8 +100,10 @@ Control controlPrueba({
   bool vencido = false,
   int diasAtraso = 0,
   PacienteDelControl? paciente,
+  String? planId,
 }) => Control(
   id: id,
+  planId: planId,
   pacienteId: pacienteId,
   fecha: fecha ?? Fechas.hoy(),
   estado: estado,
@@ -176,4 +180,24 @@ MensajeRecordatorio mensajePrueba({
   mensaje: 'Hola ${paciente.split(' ').first}',
   enlace: consiente ? 'https://wa.me/51987654321?text=Hola' : null,
   enviado: enviado,
+);
+
+class CuentaRepositoryFalso extends Mock implements CuentaRepository {}
+
+const cuentaVacia = CuentaPaciente(deuda: 0, planes: []);
+
+CuentaPlan planCuentaPrueba({
+  String planId = 'pl-1',
+  String tratamientoId = 't-brackets',
+  String tratamiento = 'Brackets (ortodoncia)',
+  double cargos = 500,
+  double pagos = 0,
+}) => CuentaPlan(
+  planId: planId,
+  tratamientoId: tratamientoId,
+  tratamientoNombre: tratamiento,
+  activo: true,
+  totalCargos: cargos,
+  totalPagos: pagos,
+  saldo: cargos - pagos,
 );

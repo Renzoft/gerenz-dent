@@ -7,6 +7,8 @@ import 'package:gerenz_dent/core/theme/app_theme.dart';
 import 'package:gerenz_dent/features/controles/data/controles_repository.dart';
 import 'package:gerenz_dent/features/controles/domain/control.dart';
 import 'package:gerenz_dent/features/controles/presentation/agendar_control_sheet.dart';
+import 'package:gerenz_dent/features/cuenta/data/cuenta_repository.dart';
+import 'package:gerenz_dent/features/cuenta/domain/cuenta.dart';
 import 'package:gerenz_dent/features/tratamientos/data/tratamientos_repository.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
@@ -16,6 +18,7 @@ import '../../helpers/fakes.dart';
 void main() {
   late ControlesRepositoryFalso controles;
   late TratamientosRepositoryFalso tratamientos;
+  late CuentaRepositoryFalso cuenta;
   Control? resultado;
 
   setUpAll(() async {
@@ -28,6 +31,8 @@ void main() {
   setUp(() {
     controles = ControlesRepositoryFalso();
     tratamientos = TratamientosRepositoryFalso();
+    cuenta = CuentaRepositoryFalso();
+    when(() => cuenta.cuenta(any())).thenAnswer((_) async => cuentaVacia);
     resultado = null;
     when(
       () => tratamientos.listar(),
@@ -44,6 +49,7 @@ void main() {
         overrides: [
           controlesRepositoryProvider.overrideWithValue(controles),
           tratamientosRepositoryProvider.overrideWithValue(tratamientos),
+          cuentaRepositoryProvider.overrideWithValue(cuenta),
         ],
         child: MaterialApp(
           theme: AppTheme.claro,
@@ -149,5 +155,85 @@ void main() {
       findsOneWidget,
     );
     expect(resultado, isNull);
+  });
+
+  testWidgets(
+    'primer control: propone el costo del catálogo y el pago del día',
+    (tester) async {
+      when(
+        () => controles.agendar(any()),
+      ).thenAnswer((_) async => controlPrueba());
+      await abrir(tester);
+
+      await elegirTratamiento(tester, 'Brackets (ortodoncia)');
+      expect(find.text('Pago inicial'), findsOneWidget);
+      expect(find.text('Luego S/ 100.00 cada vez que asista'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('costo')))
+            .controller!
+            .text,
+        '500.00',
+      );
+
+      await tester.enterText(find.byKey(const Key('costo')), '450');
+      await tester.enterText(find.byKey(const Key('pago-hoy')), '200');
+      await tester.pump();
+      await tester.ensureVisible(find.text('Yape'));
+      await tester.tap(find.text('Yape'));
+      await tocarAgendar(tester);
+
+      final enviado =
+          verify(() => controles.agendar(captureAny())).captured.single
+              as NuevoControl;
+      expect(enviado.costo, 450);
+      expect(enviado.pagoInicial, 200);
+      expect(enviado.medioPago, 'YAPE');
+    },
+  );
+
+  testWidgets('por pieza: el costo se multiplica por las piezas', (
+    tester,
+  ) async {
+    await abrir(tester);
+
+    await elegirTratamiento(tester, 'Puente de zirconio');
+    await tester.tap(find.byTooltip('Más piezas'));
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('costo'))).controller!.text,
+      '1400.00',
+    );
+  });
+
+  testWidgets('no deja registrar un pago mayor al costo', (tester) async {
+    await abrir(tester);
+
+    await tester.tap(find.text('+1 sem')); // sin fecha sugerida: se elige
+    await elegirTratamiento(tester, 'Puente de zirconio');
+    await tester.enterText(find.byKey(const Key('pago-hoy')), '900');
+    await tester.pump();
+    await tocarAgendar(tester);
+
+    expect(
+      find.text('Lo pagado no puede ser mayor que el costo'),
+      findsOneWidget,
+    );
+    verifyNever(() => controles.agendar(any()));
+  });
+
+  testWidgets('si el tratamiento ya está en curso no vuelve a cobrar', (
+    tester,
+  ) async {
+    when(() => cuenta.cuenta(any())).thenAnswer(
+      (_) async => CuentaPaciente(deuda: 300, planes: [planCuentaPrueba()]),
+    );
+    await abrir(tester);
+
+    await elegirTratamiento(tester, 'Brackets (ortodoncia)');
+
+    expect(find.byKey(const Key('costo')), findsNothing);
+    expect(find.text('Cobro'), findsNothing);
   });
 }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/ajustes/presentation/ajustes_page.dart';
 import '../../features/auth/application/auth_controller.dart';
 import '../../features/auth/presentation/login_page.dart';
+import '../../features/cuenta/presentation/deudas_page.dart';
 import '../../features/inicio/presentation/inicio_page.dart';
 import '../../features/pacientes/presentation/paciente_detalle_page.dart';
 import '../../features/pacientes/presentation/paciente_form_page.dart';
@@ -18,6 +19,7 @@ abstract final class Rutas {
   static const inicio = '/';
   static const pacientes = '/pacientes';
   static const pacienteNuevo = '/pacientes/nuevo';
+  static const deudas = '/deudas';
   static const ajustes = '/ajustes';
 
   static String paciente(String id, {bool agendar = false}) =>
@@ -87,6 +89,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: Rutas.pacientes,
                 builder: (context, state) => const PacientesPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Rutas.deudas,
+                builder: (context, state) => const DeudasPage(),
               ),
             ],
           ),

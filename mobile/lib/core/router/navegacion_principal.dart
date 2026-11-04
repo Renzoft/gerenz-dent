@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Barra inferior: Inicio · Pacientes · Ajustes (Deudas llega en la iteración 4).
+/// Barra inferior: Inicio · Pacientes · Deudas · Ajustes.
 class NavegacionPrincipal extends StatelessWidget {
   const NavegacionPrincipal({super.key, required this.shell});
 
@@ -25,6 +25,11 @@ class NavegacionPrincipal extends StatelessWidget {
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
             label: 'Pacientes',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: Icon(Icons.account_balance_wallet),
+            label: 'Deudas',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

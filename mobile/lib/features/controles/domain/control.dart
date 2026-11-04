@@ -64,6 +64,7 @@ class Control {
     this.piezas,
     this.paciente,
     this.cerradoEn,
+    this.planId,
   });
 
   factory Control.fromJson(Map<String, dynamic> json) {
@@ -71,6 +72,7 @@ class Control {
     final paciente = json['paciente'] as Map<String, dynamic>?;
     return Control(
       id: json['id'] as String,
+      planId: json['planId'] as String?,
       pacienteId: json['pacienteId'] as String,
       fecha: DateTime.parse(json['fecha'] as String),
       hora: Fechas.horaDesdeApi(json['hora'] as String?),
@@ -89,6 +91,9 @@ class Control {
   }
 
   final String id;
+
+  /// Plan (paciente + tratamiento) al que pertenece: ahí se registran pagos.
+  final String? planId;
   final String pacienteId;
   final DateTime fecha;
   final TimeOfDay? hora;
@@ -124,6 +129,9 @@ class NuevoControl {
     this.hora,
     this.nota,
     this.piezas,
+    this.costo,
+    this.pagoInicial,
+    this.medioPago,
   });
 
   final String pacienteId;
@@ -133,6 +141,12 @@ class NuevoControl {
   final String? nota;
   final int? piezas;
 
+  /// Solo para el primer control de un tratamiento: costo acordado (si no, el
+  /// del catálogo) y lo que pagó ese día.
+  final double? costo;
+  final double? pagoInicial;
+  final String? medioPago;
+
   Map<String, dynamic> toJson() => {
     'pacienteId': pacienteId,
     'tratamientoId': tratamientoId,
@@ -140,6 +154,9 @@ class NuevoControl {
     if (hora != null) 'hora': Fechas.horaAApi(hora!),
     if (nota != null && nota!.trim().isNotEmpty) 'nota': nota!.trim(),
     'piezas': ?piezas,
+    'costo': ?costo,
+    'pagoInicial': ?pagoInicial,
+    'medioPago': ?medioPago,
   };
 }
 

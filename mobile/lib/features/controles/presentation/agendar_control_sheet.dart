@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/formato/fechas.dart';
+import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/estados.dart';
+import '../../cuenta/application/cuenta_providers.dart';
+import '../../cuenta/domain/cuenta.dart';
 import '../../tratamientos/data/tratamientos_repository.dart';
 import '../../tratamientos/domain/tratamiento.dart';
 import '../application/controles_providers.dart';
@@ -81,6 +84,12 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
   bool _guardando = false;
   String? _error;
 
+  // Cobro (solo si este control crea un plan nuevo).
+  final _costo = TextEditingController();
+  final _pagoHoy = TextEditingController();
+  bool _costoEditado = false;
+  MedioPago _medio = MedioPago.efectivo;
+
   @override
   void initState() {
     super.initState();
@@ -91,7 +100,23 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
   @override
   void dispose() {
     _nota.dispose();
+    _costo.dispose();
+    _pagoHoy.dispose();
     super.dispose();
+  }
+
+  /// Precio del catálogo (por pieza × piezas). El doctor puede cambiarlo.
+  void _actualizarCosto() {
+    final t = _tratamiento;
+    if (t == null || _costoEditado || t.precioBase == null) return;
+    final total = t.esPorPieza ? t.precioBase! * _piezas : t.precioBase!;
+    _costo.text = total.toStringAsFixed(2);
+  }
+
+  /// El cobro se pide solo para el primer control de ese tratamiento.
+  bool _esPlanNuevo(CuentaPaciente? cuenta) {
+    final t = _tratamiento;
+    return t != null && cuenta != null && cuenta.planActivoDe(t.id) == null;
   }
 
   /// Al elegir el tratamiento se preselecciona la fecha sugerida (HU-09).
@@ -99,6 +124,8 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
     setState(() {
       _tratamiento = t;
       _error = null;
+      _costoEditado = false;
+      _actualizarCosto();
     });
     if (t == null || t.intervaloControlDias == null) {
       setState(() => _fechaSugerida = null);
@@ -147,6 +174,31 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
       setState(() => _error = 'Elige la fecha del control');
       return;
     }
+    final planNuevo = _esPlanNuevo(
+      ref.read(cuentaPacienteProvider(widget.pacienteId)).value,
+    );
+    double? costo;
+    double? pagoHoy;
+    if (planNuevo) {
+      if (_costo.text.trim().isNotEmpty) {
+        costo = Moneda.leer(_costo.text);
+        if (costo == null || costo < 0) {
+          setState(() => _error = 'Revisa el costo');
+          return;
+        }
+      }
+      if (_pagoHoy.text.trim().isNotEmpty) {
+        pagoHoy = Moneda.leer(_pagoHoy.text);
+        if (pagoHoy == null || pagoHoy <= 0) {
+          setState(() => _error = 'Revisa el monto pagado');
+          return;
+        }
+        if (costo != null && pagoHoy > costo) {
+          setState(() => _error = 'Lo pagado no puede ser mayor que el costo');
+          return;
+        }
+      }
+    }
     setState(() {
       _guardando = true;
       _error = null;
@@ -162,6 +214,9 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
               hora: _hora,
               nota: _nota.text,
               piezas: _tratamiento!.esPorPieza ? _piezas : null,
+              costo: costo,
+              pagoInicial: pagoHoy,
+              medioPago: pagoHoy == null ? null : _medio.api,
             ),
           );
       if (!mounted) return;
@@ -179,6 +234,7 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
   @override
   Widget build(BuildContext context) {
     final catalogo = ref.watch(catalogoProvider);
+    final cuenta = ref.watch(cuentaPacienteProvider(widget.pacienteId)).value;
     final textos = Theme.of(context).textTheme;
 
     return Padding(
@@ -234,7 +290,10 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
                       IconButton.outlined(
                         tooltip: 'Menos piezas',
                         onPressed: _piezas > 1
-                            ? () => setState(() => _piezas--)
+                            ? () => setState(() {
+                                _piezas--;
+                                _actualizarCosto();
+                              })
                             : null,
                         icon: const Icon(Icons.remove),
                       ),
@@ -245,7 +304,10 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
                       IconButton.outlined(
                         tooltip: 'Más piezas',
                         onPressed: _piezas < 32
-                            ? () => setState(() => _piezas++)
+                            ? () => setState(() {
+                                _piezas++;
+                                _actualizarCosto();
+                              })
                             : null,
                         icon: const Icon(Icons.add),
                       ),
@@ -320,6 +382,7 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+                if (_esPlanNuevo(cuenta)) ..._camposCobro(textos),
                 if (_error != null) ...[
                   Text(
                     _error!,
@@ -338,6 +401,61 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
         },
       ),
     );
+  }
+
+  /// Costo (editable para descuentos) y pago del día (HU-21, HU-22).
+  List<Widget> _camposCobro(TextTheme textos) {
+    final t = _tratamiento!;
+    final mensual = t.tipoPrecio == TipoPrecio.inicialMasMensual;
+    final cuota = t.precioMensual == null
+        ? ''
+        : Moneda.formatear(t.precioMensual!);
+    return [
+      const Divider(height: 24),
+      Text('Cobro', style: textos.titleSmall),
+      const SizedBox(height: 8),
+      TextField(
+        key: const Key('costo'),
+        controller: _costo,
+        onChanged: (_) => _costoEditado = true,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: mensual ? 'Pago inicial' : 'Costo del tratamiento',
+          helperText: mensual && cuota.isNotEmpty
+              ? 'Luego $cuota cada vez que asista'
+              : 'Puedes cambiarlo si haces un descuento',
+          prefixText: 'S/ ',
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        key: const Key('pago-hoy'),
+        controller: _pagoHoy,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: const InputDecoration(
+          labelText: 'Pagó hoy (opcional)',
+          prefixText: 'S/ ',
+          border: OutlineInputBorder(),
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+      if (_pagoHoy.text.trim().isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final m in MedioPago.values)
+              ChoiceChip(
+                label: Text(m.etiqueta),
+                selected: _medio == m,
+                onSelected: (_) => setState(() => _medio = m),
+              ),
+          ],
+        ),
+      ],
+      const SizedBox(height: 12),
+    ];
   }
 
   static String _capitalizar(String t) =>

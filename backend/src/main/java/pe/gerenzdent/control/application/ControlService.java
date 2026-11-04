@@ -1,5 +1,6 @@
 package pe.gerenzdent.control.application;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -8,10 +9,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.gerenzdent.control.domain.Control;
 import pe.gerenzdent.control.domain.EstadoControl;
+import pe.gerenzdent.control.domain.EventosControl;
 import pe.gerenzdent.control.domain.PlanTratamiento;
 import pe.gerenzdent.control.infrastructure.ControlRepository;
 import pe.gerenzdent.control.infrastructure.PlanTratamientoRepository;
@@ -39,27 +42,48 @@ public class ControlService {
   private final TratamientoRepository tratamientos;
   private final PacienteService pacientes;
   private final Calendario calendario;
+  private final ApplicationEventPublisher eventos;
 
   public ControlService(
       ControlRepository controles,
       PlanTratamientoRepository planes,
       TratamientoRepository tratamientos,
       PacienteService pacientes,
-      Calendario calendario) {
+      Calendario calendario,
+      ApplicationEventPublisher eventos) {
     this.controles = controles;
     this.planes = planes;
     this.tratamientos = tratamientos;
     this.pacientes = pacientes;
     this.calendario = calendario;
+    this.eventos = eventos;
   }
 
+  /**
+   * Datos para agendar. {@code costo}, {@code pagoInicial} y {@code medioPago} solo se usan si se
+   * crea un plan nuevo (primer control de ese tratamiento).
+   */
   public record NuevoControl(
       UUID pacienteId,
       UUID tratamientoId,
       LocalDate fecha,
       LocalTime hora,
       String nota,
-      Integer piezas) {}
+      Integer piezas,
+      BigDecimal costo,
+      BigDecimal pagoInicial,
+      String medioPago) {
+
+    public NuevoControl(
+        UUID pacienteId,
+        UUID tratamientoId,
+        LocalDate fecha,
+        LocalTime hora,
+        String nota,
+        Integer piezas) {
+      this(pacienteId, tratamientoId, fecha, hora, nota, piezas, null, null, null);
+    }
+  }
 
   /** Control con su paciente (para listas de agenda y vencidos). */
   public record ControlConPaciente(Control control, Paciente paciente) {}
@@ -77,13 +101,13 @@ public class ControlService {
     Tratamiento tratamiento = tratamientoActivo(datos.tratamientoId());
     LocalDate hoy = calendario.hoy();
 
+    Optional<PlanTratamiento> planActivo =
+        planes.findByPacienteIdAndTratamientoIdAndEstado(
+            paciente.getId(), tratamiento.getId(), PlanTratamiento.Estado.ACTIVO);
+    boolean planNuevo = planActivo.isEmpty();
     PlanTratamiento plan =
-        planes
-            .findByPacienteIdAndTratamientoIdAndEstado(
-                paciente.getId(), tratamiento.getId(), PlanTratamiento.Estado.ACTIVO)
-            .orElseGet(() ->
-                planes.save(
-                    new PlanTratamiento(paciente.getId(), tratamiento, datos.piezas(), hoy)));
+        planActivo.orElseGet(() ->
+            planes.save(new PlanTratamiento(paciente.getId(), tratamiento, datos.piezas(), hoy)));
 
     controles
         .abiertoDelPlan(plan.getId(), EstadoControl.abiertos())
@@ -99,8 +123,15 @@ public class ControlService {
                   "fechaExistente", existente.getFecha().toString()));
         });
 
-    return controles.saveAndFlush(
-        new Control(plan, datos.fecha(), datos.hora(), datos.nota(), hoy));
+    Control control =
+        controles.saveAndFlush(new Control(plan, datos.fecha(), datos.hora(), datos.nota(), hoy));
+    if (planNuevo) {
+      // El módulo "cuenta" genera el cargo (y el pago inicial, si lo hubo).
+      eventos.publishEvent(
+          new EventosControl.PlanCreado(
+              plan, datos.costo(), datos.pagoInicial(), datos.medioPago(), hoy));
+    }
+    return control;
   }
 
   @Transactional
@@ -113,6 +144,8 @@ public class ControlService {
 
     Optional<LocalDate> sugerencia = Optional.empty();
     if (destino == EstadoControl.ASISTIO) {
+      // Brackets: el módulo "cuenta" carga la cuota mensual.
+      eventos.publishEvent(new EventosControl.ControlAsistido(control, calendario.hoy()));
       Paciente paciente = pacientes.obtener(usuarioId, control.getPlan().getPacienteId());
       sugerencia =
           control.getPlan().getTratamiento().fechaSugerida(calendario.hoy(), paciente.getEdad());
