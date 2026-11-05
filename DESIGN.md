@@ -113,7 +113,7 @@ Fuente de verdad en código: `mobile/lib/core/theme/tokens.dart` (primitivos →
 
 App de operación para un solo usuario no técnico. Fondo blanco levemente teñido de celeste, superficies
 blancas con borde fino, el celeste como estructura (cabeceras, pestaña activa, enlaces) y el verde **solo**
-en la acción principal de cada vista. Montserrat (la letra del logo) en titulares; Roboto en todo lo demás.
+en la acción principal de cada vista. Montserrat en titulares; Roboto en todo lo demás. Logo "Cristal" (ícono de muela de vidrio y nombre en Sora) en `docs/branding/`.
 Distribución 60 % neutros · 30 % celeste · 10 % verde.
 
 ## Colors
