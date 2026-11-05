@@ -125,7 +125,7 @@ void main() {
 
     await elegirTratamiento(tester, 'Puente de zirconio');
     await tester.tap(find.byTooltip('Más piezas'));
-    await tester.tap(find.text('+1 sem'));
+    await tester.tap(find.text('En 1 semana'));
     await tester.pump();
     await tocarAgendar(tester);
 
@@ -210,7 +210,7 @@ void main() {
   testWidgets('no deja registrar un pago mayor al costo', (tester) async {
     await abrir(tester);
 
-    await tester.tap(find.text('+1 sem')); // sin fecha sugerida: se elige
+    await tester.tap(find.text('En 1 semana')); // sin fecha sugerida: se elige
     await elegirTratamiento(tester, 'Puente de zirconio');
     await tester.enterText(find.byKey(const Key('pago-hoy')), '900');
     await tester.pump();
