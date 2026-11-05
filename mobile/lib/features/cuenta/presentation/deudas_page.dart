@@ -45,6 +45,7 @@ class DeudasPage extends ConsumerWidget {
                 Card(
                   clipBehavior: Clip.antiAlias,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       for (var i = 0; i < r.pacientes.length; i++) ...[
                         if (i > 0) const Divider(indent: Espacio.lg),

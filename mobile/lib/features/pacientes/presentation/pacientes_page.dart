@@ -91,31 +91,34 @@ class _PacientesPageState extends ConsumerState<PacientesPage> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Espacio.pantalla),
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: Espacio.md,
-              runSpacing: Espacio.sm,
-              children: [
-                FilterChip(
-                  label: const Text('Archivados'),
-                  avatar: filtro.archivados
-                      ? null
-                      : const Icon(Icons.archive_outlined, size: 18),
-                  selected: filtro.archivados,
-                  onSelected: (v) => ref
-                      .read(filtroPacientesProvider.notifier)
-                      .verArchivados(archivados: v),
-                ),
-                if (lista.value case final datos?)
-                  Text(
-                    '${datos.total} paciente${datos.total == 1 ? '' : 's'}',
-                    style: const TextStyle(
-                      fontSize: TipoTam.cuerpo,
-                      color: Tokens.textoSecundario,
-                    ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: Espacio.md,
+                runSpacing: Espacio.sm,
+                children: [
+                  FilterChip(
+                    label: const Text('Archivados'),
+                    avatar: filtro.archivados
+                        ? null
+                        : const Icon(Icons.archive_outlined, size: 18),
+                    selected: filtro.archivados,
+                    onSelected: (v) => ref
+                        .read(filtroPacientesProvider.notifier)
+                        .verArchivados(archivados: v),
                   ),
-              ],
+                  if (lista.value case final datos?)
+                    Text(
+                      '${datos.total} paciente${datos.total == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                        fontSize: TipoTam.cuerpo,
+                        color: Tokens.textoSecundario,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: Espacio.sm),
@@ -237,11 +240,18 @@ class _FilaPaciente extends StatelessWidget {
                             color: Tokens.texto,
                           ),
                         ),
-                        Text(
-                          FormatoWhatsapp.mostrar(paciente.whatsapp),
-                          style: const TextStyle(
-                            fontSize: TipoTam.cuerpo,
-                            color: Tokens.textoSecundario,
+                        // Un teléfono no se parte: con letra muy grande se achica un poco.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            telefonoSinCortes(
+                              FormatoWhatsapp.mostrar(paciente.whatsapp),
+                            ),
+                            style: const TextStyle(
+                              fontSize: TipoTam.cuerpo,
+                              color: Tokens.textoSecundario,
+                            ),
                           ),
                         ),
                       ],

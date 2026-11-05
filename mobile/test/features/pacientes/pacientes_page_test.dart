@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gerenz_dent/core/ui/componentes.dart';
 import 'package:gerenz_dent/core/theme/app_theme.dart';
 import 'package:gerenz_dent/features/pacientes/data/pacientes_repository.dart';
 import 'package:gerenz_dent/features/pacientes/presentation/pacientes_page.dart';
@@ -46,7 +47,7 @@ void main() {
     await montar(tester);
 
     expect(find.text('Ana Ríos'), findsOneWidget);
-    expect(find.text('+51 912 345 678'), findsOneWidget);
+    expect(find.text(telefonoSinCortes('+51 912 345 678')), findsOneWidget);
     expect(find.text('2 pacientes'), findsOneWidget);
     expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
   });

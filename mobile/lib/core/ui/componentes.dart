@@ -12,6 +12,9 @@ String sinCortes(String texto) => texto
     .replaceAll(' p. m.', '${_nbsp}p.${_nbsp}m.')
     .replaceAll(' a. m.', '${_nbsp}a.${_nbsp}m.');
 
+/// Un número de teléfono nunca se parte en dos líneas.
+String telefonoSinCortes(String telefono) => telefono.replaceAll(' ', _nbsp);
+
 /// Espacio que no permite salto de línea (U+00A0).
 final _nbsp = String.fromCharCode(0x00A0);
 

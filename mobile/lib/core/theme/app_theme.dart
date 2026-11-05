@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'tokens.dart';
 
@@ -135,6 +136,9 @@ abstract final class AppTheme {
         elevation: 0,
         centerTitle: false,
         titleTextStyle: titulos.copyWith(fontSize: TipoTam.titulo),
+        systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(

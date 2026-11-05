@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -74,61 +75,73 @@ class _InicioPageState extends ConsumerState<InicioPage> {
     final estado = ref.watch(estadoServidorProvider);
     final usuario = ref.watch(authControllerProvider).value;
 
-    return Scaffold(
-      backgroundColor: Tokens.fondo,
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          onRefresh: () async => _reintentarTodo(ref),
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: Espacio.xxl),
-            children: [
-              _Encabezado(nombreCorto: usuario?.nombreCorto),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Espacio.pantalla,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: Tokens.fondo,
+        // La franja de la barra de estado lleva el color de la cabecera.
+        body: ColoredBox(
+          color: Tokens.superficieMarca,
+          child: SafeArea(
+            bottom: false,
+            child: ColoredBox(
+              color: Tokens.fondo,
+              child: RefreshIndicator(
+                onRefresh: () async => _reintentarTodo(ref),
+                child: ListView(
+                  padding: const EdgeInsets.only(bottom: Espacio.xxl),
                   children: [
-                    // Solo se muestra mientras conecta o si falla.
-                    if (!(estado.value ?? false)) ...[
-                      const SizedBox(height: Espacio.lg),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(Espacio.lg),
-                          child: estado.when(
-                            loading: () => const _EstadoConexion(
-                              icono: SizedBox.square(
-                                dimension: 28,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                  color: Tokens.marcaFuerte,
+                    _Encabezado(nombreCorto: usuario?.nombreCorto),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Espacio.pantalla,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Solo se muestra mientras conecta o si falla.
+                          if (!(estado.value ?? false)) ...[
+                            const SizedBox(height: Espacio.lg),
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(Espacio.lg),
+                                child: estado.when(
+                                  loading: () => const _EstadoConexion(
+                                    icono: SizedBox.square(
+                                      dimension: 28,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                        color: Tokens.marcaFuerte,
+                                      ),
+                                    ),
+                                    titulo: 'Conectando con el consultorio…',
+                                    detalle:
+                                        'La primera conexión del día puede tardar hasta 1 minuto.',
+                                  ),
+                                  data: (_) => _ErrorConexion(
+                                    onReintentar: () => _reintentarTodo(ref),
+                                  ),
+                                  error: (_, _) => _ErrorConexion(
+                                    onReintentar: () => _reintentarTodo(ref),
+                                  ),
                                 ),
                               ),
-                              titulo: 'Conectando con el consultorio…',
-                              detalle:
-                                  'La primera conexión del día puede tardar hasta 1 minuto.',
                             ),
-                            data: (_) => _ErrorConexion(
-                              onReintentar: () => _reintentarTodo(ref),
-                            ),
-                            error: (_, _) => _ErrorConexion(
-                              onReintentar: () => _reintentarTodo(ref),
-                            ),
-                          ),
-                        ),
+                          ],
+                          const _SeccionRecordatorios(),
+                          const _SeccionHoy(),
+                          const _SeccionNoVinieron(),
+                          const SizedBox(height: Espacio.xl),
+                          const _Proximos(),
+                        ],
                       ),
-                    ],
-                    const _SeccionRecordatorios(),
-                    const _SeccionHoy(),
-                    const _SeccionNoVinieron(),
-                    const SizedBox(height: Espacio.xl),
-                    const _Proximos(),
+                    ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -406,6 +419,7 @@ class _Lista extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < filas.length; i++) ...[
             if (i > 0) const Divider(indent: Espacio.lg),
@@ -782,6 +796,7 @@ class _Proximos extends ConsumerWidget {
         collapsedShape: const Border(),
         tilePadding: const EdgeInsets.symmetric(horizontal: Espacio.lg),
         childrenPadding: EdgeInsets.zero,
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
         leading: const Icon(Icons.date_range, color: Tokens.marcaFuerte),
         title: Text(
           'Próximos días (${proximos.length})',

@@ -238,12 +238,20 @@ class _Cabecera extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: Espacio.xs),
+                        // Un teléfono no se parte: con letra muy grande se
+                        // achica un poco.
                         Flexible(
-                          child: Text(
-                            FormatoWhatsapp.mostrar(p.whatsapp),
-                            style: const TextStyle(
-                              fontSize: TipoTam.cuerpo,
-                              color: Tokens.textoSecundario,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              telefonoSinCortes(
+                                FormatoWhatsapp.mostrar(p.whatsapp),
+                              ),
+                              style: const TextStyle(
+                                fontSize: TipoTam.cuerpo,
+                                color: Tokens.textoSecundario,
+                              ),
                             ),
                           ),
                         ),
@@ -443,6 +451,7 @@ class _PestanaControles extends ConsumerWidget {
               const EncabezadoSeccion('Historial'),
               Card(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (var i = 0; i < cerrados.length; i++) ...[
                       if (i > 0) const Divider(),
