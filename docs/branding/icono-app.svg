@@ -1,16 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Icono GERENZ DENT">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7FD6F5"/>
-      <stop offset="1" stop-color="#3BB5E8"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <!-- Diente blanco -->
-  <g transform="translate(106,86) scale(3)">
-    <path d="M50 20 C42 12 34 10 28 10 C18 10 12 19 12 32 C12 46 18 56 22 70 C26 86 28 104 36 104 C44 104 44 80 50 80 C56 80 56 104 64 104 C72 104 74 86 78 70 C82 56 88 46 88 32 C88 19 82 10 72 10 C66 10 58 12 50 20 Z" fill="#FFFFFF"/>
-  </g>
-  <!-- Insignia verde con check -->
-  <circle cx="362" cy="362" r="74" fill="#22B573" stroke="#FFFFFF" stroke-width="16"/>
-  <path d="M327 362 L352 387 L398 336" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Ícono GERENZ DENT"><defs><clipPath id="c"><rect width="100" height="100" rx="22"/></clipPath><filter id="b2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs><g clip-path="url(#c)"><rect width="100" height="100" fill="#0A5676"/><g filter="url(#b2)"><circle cx="28" cy="28" r="30" fill="#3BB5E8"/><circle cx="76" cy="78" r="30" fill="#22B573"/></g></g><g transform="translate(17 12) scale(0.66)"><path d="M50 20 C42 12 34 10 28 10 C18 10 12 19 12 32 C12 46 18 56 22 70 C26 86 28 104 36 104 C44 104 44 80 50 80 C56 80 56 104 64 104 C72 104 74 86 78 70 C82 56 88 46 88 32 C88 19 82 10 72 10 C66 10 58 12 50 20 Z" fill="#FFFFFF" fill-opacity="0.3" stroke="#FFFFFF" stroke-width="3.5"/><path d="M27 24 C21 29 21 39 24 47" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/><circle cx="34" cy="18" r="3.2" fill="#FFFFFF"/></g><path d="M80 12 Q80 20 88 20 Q80 20 80 28 Q80 20 72 20 Q80 20 80 12 Z" fill="#FFFFFF"/></svg>
