@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/contactos/selector_contactos.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/estados.dart';
 import '../application/pacientes_providers.dart';
 import '../data/pacientes_repository.dart';
@@ -181,6 +182,7 @@ class _FormularioState extends ConsumerState<_Formulario> {
 
   @override
   Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_esNuevo ? 'Nuevo paciente' : 'Editar paciente'),
@@ -188,13 +190,13 @@ class _FormularioState extends ConsumerState<_Formulario> {
       body: Form(
         key: _formulario,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Espacio.pantalla),
           children: [
             TextFormField(
               controller: _nombre,
               decoration: const InputDecoration(
-                labelText: 'Nombre *',
-                border: OutlineInputBorder(),
+                labelText: 'Nombre completo',
+                prefixIcon: Icon(Icons.person_outline),
               ),
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
@@ -206,14 +208,14 @@ class _FormularioState extends ConsumerState<_Formulario> {
                 return null;
               }),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Espacio.sm),
             TextFormField(
               controller: _whatsapp,
               decoration: InputDecoration(
-                labelText: 'WhatsApp *',
+                labelText: 'WhatsApp',
                 hintText: '987 654 321',
+                helperText: 'Celular de 9 dígitos',
                 prefixIcon: const Icon(Icons.phone_android),
-                border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
                   tooltip: 'Elegir de mis contactos',
                   icon: const Icon(Icons.contacts_outlined),
@@ -227,62 +229,83 @@ class _FormularioState extends ConsumerState<_Formulario> {
               textInputAction: TextInputAction.next,
               validator: _validador('whatsapp', FormatoWhatsapp.validar),
             ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Autoriza recordatorios por WhatsApp'),
-              value: _consiente,
-              onChanged: (v) => setState(() => _consiente = v),
+            const SizedBox(height: Espacio.lg),
+            Card(
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: Espacio.lg,
+                ),
+                title: const Text('Autoriza recordatorios por WhatsApp'),
+                subtitle: const Text(
+                  'Si lo desactivas, no aparecerá para enviarle mensajes',
+                ),
+                value: _consiente,
+                onChanged: (v) => setState(() => _consiente = v),
+              ),
             ),
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              initiallyExpanded: _masDatosAbierto,
-              title: const Text('Más datos (opcional)'),
-              subtitle: const Text('Edad, alergias, nota'),
-              childrenPadding: const EdgeInsets.only(top: 8),
-              children: [
-                TextFormField(
-                  controller: _edad,
-                  decoration: const InputDecoration(
-                    labelText: 'Edad',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  validator: _validador('edad', (v) {
-                    final edad = int.tryParse((v ?? '').trim());
-                    if (edad != null && edad > 120) return 'Máximo 120';
-                    return null;
-                  }),
+            const SizedBox(height: Espacio.lg),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: ExpansionTile(
+                shape: const Border(),
+                collapsedShape: const Border(),
+                tilePadding: const EdgeInsets.symmetric(horizontal: Espacio.lg),
+                initiallyExpanded: _masDatosAbierto,
+                leading: const Icon(Icons.badge_outlined),
+                title: Text('Más datos (opcional)', style: textos.titleSmall),
+                subtitle: const Text('Edad, alergias, nota'),
+                childrenPadding: const EdgeInsets.fromLTRB(
+                  Espacio.lg,
+                  Espacio.sm,
+                  Espacio.lg,
+                  Espacio.lg,
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _alergias,
-                  decoration: const InputDecoration(
-                    labelText: 'Alergias',
-                    hintText: 'Ej.: penicilina, látex',
-                    border: OutlineInputBorder(),
+                children: [
+                  TextFormField(
+                    controller: _edad,
+                    decoration: const InputDecoration(
+                      labelText: 'Edad',
+                      suffixText: 'años',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: _validador('edad', (v) {
+                      final edad = int.tryParse((v ?? '').trim());
+                      if (edad != null && edad > 120) {
+                        return 'Escribe una edad de 0 a 120';
+                      }
+                      return null;
+                    }),
                   ),
-                  maxLength: 200,
-                  validator: _validador('alergias'),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _nota,
-                  decoration: const InputDecoration(
-                    labelText: 'Nota',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: Espacio.lg),
+                  TextFormField(
+                    controller: _alergias,
+                    decoration: const InputDecoration(
+                      labelText: 'Alergias',
+                      hintText: 'Ej.: penicilina, látex',
+                    ),
+                    maxLength: 200,
+                    validator: _validador('alergias'),
                   ),
-                  maxLength: 300,
-                  maxLines: 3,
-                  validator: _validador('nota'),
-                ),
-              ],
+                  const SizedBox(height: Espacio.sm),
+                  TextFormField(
+                    controller: _nota,
+                    decoration: const InputDecoration(labelText: 'Nota'),
+                    textCapitalization: TextCapitalization.sentences,
+                    maxLength: 300,
+                    maxLines: 3,
+                    validator: _validador('nota'),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
-            FilledButton(
+            const SizedBox(height: Espacio.xl),
+            FilledButton.icon(
               onPressed: _guardando ? null : _guardar,
-              child: Text(_guardando ? 'Guardando…' : 'Guardar'),
+              // Ícono fijo: el diálogo de "número ya registrado" puede
+              // aparecer mientras guarda.
+              icon: Icon(_guardando ? Icons.hourglass_top : Icons.check),
+              label: Text(_guardando ? 'Guardando…' : 'Guardar paciente'),
             ),
           ],
         ),

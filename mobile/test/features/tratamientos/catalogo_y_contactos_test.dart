@@ -200,7 +200,7 @@ void main() {
         const ContactoElegido(nombre: 'Mamá Rosa', telefono: '955111222'),
       );
 
-      await tester.enterText(campo('Nombre *'), 'Rosa Quispe');
+      await tester.enterText(campo('Nombre completo'), 'Rosa Quispe');
       await tester.tap(find.byTooltip('Elegir de mis contactos'));
       await tester.pumpAndSettle();
 
