@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../data/tratamientos_repository.dart';
 import '../domain/tratamiento.dart';
@@ -21,46 +22,51 @@ class CatalogoPage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Tratamiento'),
+        label: const Text('Agregar tratamiento'),
       ),
       body: catalogo.when(
-        loading: () => const VistaCargando(),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(Espacio.pantalla),
+          child: Column(children: [TarjetaEsqueleto()]),
+        ),
         error: (e, _) => VistaError(
           error: e,
           onReintentar: () => ref.invalidate(catalogoCompletoProvider),
         ),
-        data: (lista) => ListView.separated(
-          padding: const EdgeInsets.only(bottom: 96),
-          itemCount: lista.length + 1,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, i) {
-            if (i == 0) {
-              return const Padding(
-                padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: Text(
+        data: (lista) => ListView(
+          padding: const EdgeInsets.fromLTRB(
+            Espacio.pantalla,
+            Espacio.xs,
+            Espacio.pantalla,
+            96,
+          ),
+          children: [
+            const Aviso(
+              tono: Tono.marca,
+              icono: Icons.info_outline,
+              texto:
                   'Los cambios de precio se aplican a los tratamientos que '
                   'empiecen desde ahora; las deudas ya registradas no cambian.',
-                  style: TextStyle(color: AppColors.grisTexto),
-                ),
-              );
-            }
-            final t = lista[i - 1];
-            return ListTile(
-              title: Text(
-                t.nombre,
-                style: TextStyle(
-                  color: t.activo ? null : AppColors.grisTexto,
-                  decoration: t.activo ? null : TextDecoration.lineThrough,
-                ),
+            ),
+            const SizedBox(height: Espacio.lg),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (var i = 0; i < lista.length; i++) ...[
+                    if (i > 0) const Divider(),
+                    _FilaTratamiento(
+                      tratamiento: lista[i],
+                      resumen: _resumen(lista[i]),
+                      onEditar: () => _editar(context, ref, lista[i]),
+                      onActivo: (v) =>
+                          _cambiarActivo(context, ref, lista[i], v),
+                    ),
+                  ],
+                ],
               ),
-              subtitle: Text(_resumen(t)),
-              trailing: Switch(
-                value: t.activo,
-                onChanged: (v) => _cambiarActivo(context, ref, t, v),
-              ),
-              onTap: () => _editar(context, ref, t),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -216,9 +222,9 @@ class _FormularioTratamientoState extends ConsumerState<FormularioTratamiento> {
     };
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+        left: Espacio.xl,
+        right: Espacio.xl,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + Espacio.lg,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -230,15 +236,12 @@ class _FormularioTratamientoState extends ConsumerState<FormularioTratamiento> {
                   : 'Editar tratamiento',
               style: textos.titleLarge,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espacio.xl),
             TextField(
               key: const Key('nombre-tratamiento'),
               controller: _nombre,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Nombre *',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Nombre'),
             ),
             const SizedBox(height: 16),
             Text('¿Cómo se cobra?', style: textos.titleSmall),
@@ -262,7 +265,6 @@ class _FormularioTratamientoState extends ConsumerState<FormularioTratamiento> {
               decoration: InputDecoration(
                 labelText: etiquetaPrecio,
                 prefixText: 'S/ ',
-                border: const OutlineInputBorder(),
               ),
             ),
             if (_tipo == TipoPrecio.inicialMasMensual) ...[
@@ -274,9 +276,9 @@ class _FormularioTratamientoState extends ConsumerState<FormularioTratamiento> {
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: 'Cuota por control *',
+                  labelText: 'Cuota por control',
+                  helperText: 'Se cobra cada vez que el paciente asiste',
                   prefixText: 'S/ ',
-                  border: OutlineInputBorder(),
                 ),
               ),
             ],
@@ -295,7 +297,6 @@ class _FormularioTratamientoState extends ConsumerState<FormularioTratamiento> {
                     decoration: const InputDecoration(
                       labelText: 'Sugerir cada',
                       suffixText: 'días',
-                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -309,8 +310,8 @@ class _FormularioTratamientoState extends ConsumerState<FormularioTratamiento> {
                     decoration: const InputDecoration(
                       labelText: 'Solo hasta',
                       suffixText: 'años',
-                      helperText: 'Vacío = todas las edades',
-                      border: OutlineInputBorder(),
+                      helperText: 'Vacío: todas las edades',
+                      helperMaxLines: 2,
                     ),
                   ),
                 ),
@@ -318,16 +319,80 @@ class _FormularioTratamientoState extends ConsumerState<FormularioTratamiento> {
             ),
             const SizedBox(height: 16),
             if (_error != null) ...[
-              Text(
-                _error!,
+              Aviso(
                 key: const Key('catalogo-error'),
-                style: const TextStyle(color: AppColors.error),
+                tono: Tono.peligro,
+                icono: Icons.error_outline,
+                texto: _error!,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Espacio.md),
             ],
-            FilledButton(
+            FilledButton.icon(
               onPressed: _guardando ? null : _guardar,
-              child: Text(_guardando ? 'Guardando…' : 'Guardar'),
+              icon: const Icon(Icons.check),
+              label: Text(_guardando ? 'Guardando…' : 'Guardar tratamiento'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilaTratamiento extends StatelessWidget {
+  const _FilaTratamiento({
+    required this.tratamiento,
+    required this.resumen,
+    required this.onEditar,
+    required this.onActivo,
+  });
+
+  final Tratamiento tratamiento;
+  final String resumen;
+  final VoidCallback onEditar;
+  final ValueChanged<bool> onActivo;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = tratamiento;
+    return InkWell(
+      onTap: onEditar,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Espacio.lg,
+          Espacio.md,
+          Espacio.sm,
+          Espacio.md,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.nombre,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: t.activo ? Tokens.texto : Tokens.textoSecundario,
+                      decoration: t.activo ? null : TextDecoration.lineThrough,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    resumen,
+                    style: const TextStyle(
+                      fontSize: TipoTam.cuerpo,
+                      color: Tokens.textoSecundario,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Semantics(
+              label: t.activo
+                  ? '${t.nombre}: se ofrece al agendar'
+                  : '${t.nombre}: no se ofrece al agendar',
+              child: Switch(value: t.activo, onChanged: onActivo),
             ),
           ],
         ),

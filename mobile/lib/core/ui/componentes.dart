@@ -96,6 +96,12 @@ class Aviso extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final estilo = TextStyle(
+      color: tono.contenido,
+      fontSize: TipoTam.cuerpo,
+      fontWeight: FontWeight.w500,
+      height: 1.35,
+    );
     return Semantics(
       container: true,
       liveRegion: tono == Tono.peligro,
@@ -111,24 +117,20 @@ class Aviso extends StatelessWidget {
             Icon(icono, color: tono.contenido),
             const SizedBox(width: Espacio.md),
             Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    if (titulo != null)
+              child: titulo == null
+                  ? Text(texto, style: estilo)
+                  : Text.rich(
                       TextSpan(
-                        text: '$titulo ',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        children: [
+                          TextSpan(
+                            text: '$titulo ',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          TextSpan(text: texto),
+                        ],
                       ),
-                    TextSpan(text: texto),
-                  ],
-                ),
-                style: TextStyle(
-                  color: tono.contenido,
-                  fontSize: TipoTam.cuerpo,
-                  fontWeight: FontWeight.w500,
-                  height: 1.35,
-                ),
-              ),
+                      style: estilo,
+                    ),
             ),
           ],
         ),

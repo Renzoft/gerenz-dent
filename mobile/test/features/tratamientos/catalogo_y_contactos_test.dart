@@ -76,7 +76,7 @@ void main() {
       ).thenAnswer((_) async => puentePrueba);
       await montar(tester);
 
-      await tester.tap(find.text('Tratamiento'));
+      await tester.tap(find.text('Agregar tratamiento'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('nombre-tratamiento')),
@@ -84,7 +84,9 @@ void main() {
       );
       await tester.tap(find.text('Por pieza').last);
       await tester.enterText(find.byKey(const Key('precio-base')), '90');
-      await tester.tap(find.text('Guardar'));
+      await tester.ensureVisible(find.text('Guardar tratamiento'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Guardar tratamiento'));
       await tester.pumpAndSettle();
 
       final datos =
@@ -102,7 +104,7 @@ void main() {
     testWidgets('pide la cuota si se cobra inicial + mensual', (tester) async {
       await montar(tester);
 
-      await tester.tap(find.text('Tratamiento'));
+      await tester.tap(find.text('Agregar tratamiento'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('nombre-tratamiento')),
@@ -110,7 +112,9 @@ void main() {
       );
       await tester.tap(find.text('Inicial + mensual').last);
       await tester.pump();
-      await tester.tap(find.text('Guardar'));
+      await tester.ensureVisible(find.text('Guardar tratamiento'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Guardar tratamiento'));
       await tester.pumpAndSettle();
 
       expect(find.text('Indica la cuota mensual'), findsOneWidget);
@@ -126,13 +130,15 @@ void main() {
       );
       await montar(tester);
 
-      await tester.tap(find.text('Tratamiento'));
+      await tester.tap(find.text('Agregar tratamiento'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('nombre-tratamiento')),
         'Extracción dental',
       );
-      await tester.tap(find.text('Guardar'));
+      await tester.ensureVisible(find.text('Guardar tratamiento'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Guardar tratamiento'));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Ya existe un tratamiento'), findsOneWidget);

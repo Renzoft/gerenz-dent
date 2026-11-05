@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gerenz_dent/core/ui/componentes.dart';
 import 'package:gerenz_dent/core/avisos/avisos_diarios.dart';
 import 'package:gerenz_dent/core/theme/app_theme.dart';
 import 'package:gerenz_dent/features/ajustes/presentation/ajustes_page.dart';
@@ -81,7 +82,10 @@ void main() {
 
     testWidgets('muestra la hora del aviso diario', (tester) async {
       await montar(tester);
-      expect(find.text('Todos los días a las 4:30 p. m.'), findsOneWidget);
+      expect(
+        find.text(sinCortes('Todos los días a las 4:30 p. m.')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('ya no ofrece "Probar aviso"', (tester) async {

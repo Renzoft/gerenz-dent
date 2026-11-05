@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/avisos/avisos_diarios.dart';
-import '../../../core/config/env.dart';
 import '../../../core/formato/fechas.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/sesion.dart';
@@ -88,46 +89,91 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Ajustes')),
       body: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          Espacio.pantalla,
+          0,
+          Espacio.pantalla,
+          Espacio.xl,
+        ),
         children: [
-          ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: Text(usuario?.nombre ?? ''),
-            subtitle: Text(usuario?.email ?? ''),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.notifications_active_outlined),
-            title: const Text('Aviso diario de recordatorios'),
-            subtitle: Text(
-              'Todos los días a las ${Fechas.hora(hora)}',
-              key: const Key('hora-aviso'),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: Espacio.lg,
+                vertical: Espacio.xs,
+              ),
+              leading: const CircleAvatar(
+                backgroundColor: Tokens.marcaSuave,
+                foregroundColor: Primitivos.celeste800,
+                child: Icon(Icons.person_outline),
+              ),
+              title: Text(
+                usuario?.nombre ?? '',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              subtitle: Text(usuario?.email ?? ''),
             ),
-            trailing: _guardando
-                ? const SizedBox.square(
-                    dimension: 24,
-                    child: CircularProgressIndicator(strokeWidth: 3),
-                  )
-                : const Icon(Icons.edit),
-            onTap: _guardando ? null : () => _cambiarHora(hora),
           ),
-          ListTile(
-            leading: const Icon(Icons.medical_services_outlined),
-            title: const Text('Catálogo de tratamientos'),
-            subtitle: const Text('Precios, cuotas y controles sugeridos'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Rutas.catalogo),
+          const EncabezadoSeccion('Recordatorios'),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: Espacio.lg,
+                vertical: Espacio.xs,
+              ),
+              leading: const Icon(Icons.notifications_active_outlined),
+              title: const Text('Aviso diario'),
+              subtitle: Text(
+                sinCortes('Todos los días a las ${Fechas.hora(hora)}'),
+                key: const Key('hora-aviso'),
+              ),
+              trailing: _guardando
+                  ? const SizedBox.square(
+                      dimension: 24,
+                      child: CircularProgressIndicator(strokeWidth: 3),
+                    )
+                  : const Text(
+                      'Cambiar',
+                      style: TextStyle(
+                        fontSize: TipoTam.cuerpo,
+                        fontWeight: FontWeight.w600,
+                        color: Tokens.marcaFuerte,
+                      ),
+                    ),
+              onTap: _guardando ? null : () => _cambiarHora(hora),
+            ),
           ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Cerrar sesión'),
-            onTap: _cerrarSesion,
+          const EncabezadoSeccion('Consultorio'),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: Espacio.lg,
+                vertical: Espacio.xs,
+              ),
+              leading: const Icon(Icons.medical_services_outlined),
+              title: const Text('Catálogo de tratamientos'),
+              subtitle: const Text('Precios, cuotas y controles sugeridos'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(Rutas.catalogo),
+            ),
           ),
-          const Divider(),
-          const ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('GERENZ DENT'),
-            subtitle: Text('Versión 1.1.0 · ${Env.apiUrl}'),
+          const SizedBox(height: Espacio.xl),
+          OutlinedButton.icon(
+            onPressed: _cerrarSesion,
+            icon: const Icon(Icons.logout),
+            label: const Text('Cerrar sesión'),
+          ),
+          const SizedBox(height: Espacio.xl),
+          const Center(
+            child: Text(
+              'GERENZ DENT · versión 1.1.0',
+              style: TextStyle(
+                fontSize: TipoTam.etiqueta,
+                color: Tokens.textoSecundario,
+              ),
+            ),
           ),
         ],
       ),

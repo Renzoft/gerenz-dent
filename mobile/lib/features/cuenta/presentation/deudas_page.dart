@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/formato/moneda.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../application/cuenta_providers.dart';
 
 /// Pestaña Deudas (P5, HU-23): total y pacientes de mayor a menor deuda.
+///
+/// "Debe" va en ámbar (pendiente), no en rojo: el rojo queda para errores.
 class DeudasPage extends ConsumerWidget {
   const DeudasPage({super.key});
 
@@ -18,7 +21,10 @@ class DeudasPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Deudas')),
       body: deudas.when(
-        loading: () => const VistaCargando(),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(Espacio.pantalla),
+          child: Column(children: [TarjetaEsqueleto()]),
+        ),
         error: (e, _) => VistaError(
           error: e,
           onReintentar: () => ref.invalidate(deudasProvider),
@@ -26,64 +32,143 @@ class DeudasPage extends ConsumerWidget {
         data: (r) => RefreshIndicator(
           onRefresh: () => ref.refresh(deudasProvider.future),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(
+              Espacio.pantalla,
+              Espacio.xs,
+              Espacio.pantalla,
+              Espacio.xl,
+            ),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
+              _Resumen(total: r.total, cantidad: r.pacientes.length),
+              if (r.pacientes.isNotEmpty) ...[
+                const EncabezadoSeccion('De mayor a menor'),
+                Card(
+                  clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
-                      const Text(
-                        'Te deben',
-                        style: TextStyle(
-                          color: AppColors.grisTexto,
-                          fontSize: 16,
+                      for (var i = 0; i < r.pacientes.length; i++) ...[
+                        if (i > 0) const Divider(indent: Espacio.lg),
+                        _FilaDeuda(
+                          nombre: r.pacientes[i].nombre,
+                          archivado: r.pacientes[i].archivado,
+                          monto: r.pacientes[i].deuda,
+                          onTap: () => context.push(
+                            Rutas.paciente(r.pacientes[i].pacienteId),
+                          ),
                         ),
-                      ),
-                      Text(
-                        Moneda.formatear(r.total),
-                        key: const Key('total-deudas'),
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(
-                              color: r.total > 0
-                                  ? AppColors.error
-                                  : AppColors.verdeOscuro,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      Text(
-                        r.pacientes.isEmpty
-                            ? 'Nadie tiene deuda pendiente'
-                            : '${r.pacientes.length} paciente${r.pacientes.length == 1 ? '' : 's'} con deuda',
-                        style: const TextStyle(color: AppColors.grisTexto),
-                      ),
+                      ],
                     ],
                   ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Resumen extends StatelessWidget {
+  const _Resumen({required this.total, required this.cantidad});
+
+  final double total;
+  final int cantidad;
+
+  @override
+  Widget build(BuildContext context) {
+    final hayDeuda = total > 0;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Espacio.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Te deben',
+              style: TextStyle(
+                fontSize: TipoTam.cuerpo,
+                color: Tokens.textoSecundario,
+              ),
+            ),
+            const SizedBox(height: Espacio.xs),
+            Text(
+              Moneda.formatear(total),
+              key: const Key('total-deudas'),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: hayDeuda ? Primitivos.ambar800 : Tokens.texto,
+              ),
+            ),
+            const SizedBox(height: Espacio.sm),
+            ChipEstado(
+              tono: hayDeuda ? Tono.aviso : Tono.exito,
+              icono: hayDeuda ? Icons.schedule : Icons.check_circle_outline,
+              texto: hayDeuda
+                  ? '$cantidad paciente${cantidad == 1 ? '' : 's'} con deuda'
+                  : 'Nadie tiene deuda pendiente',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilaDeuda extends StatelessWidget {
+  const _FilaDeuda({
+    required this.nombre,
+    required this.archivado,
+    required this.monto,
+    required this.onTap,
+  });
+
+  final String nombre;
+  final bool archivado;
+  final double monto;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Espacio.lg,
+            Espacio.md,
+            Espacio.sm,
+            Espacio.md,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(nombre, style: Theme.of(context).textTheme.titleSmall),
+                    if (archivado)
+                      const Text(
+                        'Archivado',
+                        style: TextStyle(
+                          fontSize: TipoTam.cuerpo,
+                          color: Tokens.textoSecundario,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              for (final d in r.pacientes)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  minTileHeight: 60,
-                  title: Text(d.nombre, style: const TextStyle(fontSize: 17)),
-                  subtitle: d.archivado ? const Text('Archivado') : null,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        Moneda.formatear(d.deuda),
-                        style: const TextStyle(
-                          color: AppColors.error,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right),
-                    ],
-                  ),
-                  onTap: () => context.push(Rutas.paciente(d.pacienteId)),
+              const SizedBox(width: Espacio.sm),
+              Text(
+                Moneda.formatear(monto),
+                style: const TextStyle(
+                  fontSize: TipoTam.cuerpo,
+                  fontWeight: FontWeight.w700,
+                  color: Primitivos.ambar800,
+                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
+              ),
+              const Icon(Icons.chevron_right, color: Tokens.textoSecundario),
             ],
           ),
         ),
