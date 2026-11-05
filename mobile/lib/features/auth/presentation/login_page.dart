@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/network/api_error.dart';
 import '../../../core/theme/tokens.dart';
@@ -68,10 +67,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SvgPicture.asset(
-                      'assets/branding/logo-horizontal.svg',
-                      height: 88,
-                      semanticsLabel: 'GERENZ DENT',
+                    Image.asset(
+                      'assets/branding/logo-horizontal.png',
+                      height: 64,
+                      fit: BoxFit.contain,
+                      semanticLabel: 'GERENZ DENT, consultorio odontológico',
                     ),
                     const SizedBox(height: Espacio.xxl),
                     Semantics(

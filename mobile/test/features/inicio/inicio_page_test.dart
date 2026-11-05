@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gerenz_dent/core/avisos/avisos_diarios.dart';
@@ -200,6 +201,10 @@ void main() {
         mensajePrueba(controlId: 'c-3', paciente: 'Eva Paz'),
       ],
     );
+    // Pantalla alta, como un celular: el botón queda a la vista.
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await montar(tester);
 
     await tester.tap(find.text('Enviar recordatorios (3)'));
@@ -216,6 +221,31 @@ void main() {
     verifyNever(() => recordatorios.registrarEnvio('c-2', any()));
     expect(find.text('1 recordatorio enviado'), findsOneWidget);
   });
+
+  testWidgets(
+    'el saludo "…, Dr. Marco" va en una sola línea en pantalla angosta '
+    'y con letra al 200 %',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 900);
+      tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await montar(tester);
+
+      final saludo = find.textContaining(', Dr. Marco');
+      expect(saludo, findsOneWidget);
+      expect(tester.widget<Text>(saludo).maxLines, 1);
+      expect(
+        find.ancestor(of: saludo, matching: find.byType(FittedBox)),
+        findsOneWidget,
+      );
+      // Una sola línea: el alto del texto es el de una línea de su estilo.
+      final parrafo = tester.renderObject<RenderParagraph>(saludo);
+      expect(parrafo.didExceedMaxLines, isFalse);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('"Hoy vienen" lista los citados de hoy', (tester) async {
     // Pantalla alta, como un celular: todas las tarjetas a la vista.

@@ -11,7 +11,7 @@ import '../../features/pacientes/presentation/paciente_detalle_page.dart';
 import '../../features/pacientes/presentation/paciente_form_page.dart';
 import '../../features/pacientes/presentation/pacientes_page.dart';
 import '../../features/tratamientos/presentation/catalogo_page.dart';
-import '../widgets/estados.dart';
+import '../widgets/pantalla_de_carga.dart';
 import 'navegacion_principal.dart';
 
 abstract final class Rutas {
@@ -51,9 +51,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: Rutas.cargando,
-        builder: (context, state) => const Scaffold(
-          body: VistaCargando(mensaje: 'Abriendo GERENZ DENT…'),
-        ),
+        builder: (context, state) => const PantallaDeCarga(),
       ),
       GoRoute(
         path: Rutas.login,

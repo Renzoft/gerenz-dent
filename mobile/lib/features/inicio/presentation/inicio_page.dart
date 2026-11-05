@@ -182,13 +182,30 @@ class _Encabezado extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Image.asset(
+              'assets/branding/logo-marca.png',
+              height: 32,
+              semanticLabel: 'GERENZ DENT',
+            ),
+          ),
+          const SizedBox(height: Espacio.lg),
+          // Siempre en una sola línea ("Buenas noches, Dr. Marco" incluido):
+          // si no cabe, se achica un poco en vez de partirse.
           Semantics(
             header: true,
-            child: Text(
-              nombreCorto == null
-                  ? saludo(DateTime.now())
-                  : '${saludo(DateTime.now())}, $nombreCorto',
-              style: textos.headlineMedium,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                nombreCorto == null
+                    ? saludo(DateTime.now())
+                    : '${saludo(DateTime.now())}, $nombreCorto',
+                maxLines: 1,
+                softWrap: false,
+                style: textos.headlineMedium,
+              ),
             ),
           ),
           const SizedBox(height: Espacio.xs),
