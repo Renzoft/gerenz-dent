@@ -51,7 +51,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: Rutas.cargando,
-        builder: (context, state) => const Scaffold(body: VistaCargando()),
+        builder: (context, state) => const Scaffold(
+          body: VistaCargando(mensaje: 'Abriendo GERENZ DENT…'),
+        ),
       ),
       GoRoute(
         path: Rutas.login,
