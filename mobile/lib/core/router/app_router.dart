@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,10 +31,54 @@ abstract final class Rutas {
   static String pacienteEditar(String id) => '/pacientes/$id/editar';
 }
 
+/// Cuánto se ve, como mínimo, la pantalla de carga al abrir la app.
+final duracionCargaMinimaProvider = Provider<Duration>(
+  (ref) => const Duration(seconds: 2),
+);
+
+/// `true` cuando ya pasó el tiempo mínimo de la pantalla de carga.
+///
+/// Empieza a contar cuando la pantalla de carga ya está a la vista (la avisa
+/// ella misma), no antes: mientras Android muestra su propia pantalla de
+/// arranque, Flutter puede ir dibujando sin que el doctor lo vea.
+final cargaMinimaCumplidaProvider = NotifierProvider<CargaMinima, bool>(
+  CargaMinima.new,
+);
+
+class CargaMinima extends Notifier<bool> {
+  Timer? _temporizador;
+
+  @override
+  bool build() {
+    // Por si la pantalla de carga nunca llega a avisar (p. ej. la imagen no
+    // carga), la app no se queda trabada: sigue igual a los pocos segundos.
+    final respaldo = Timer(
+      ref.read(duracionCargaMinimaProvider) * 3,
+      () => state = true,
+    );
+    ref.onDispose(() {
+      respaldo.cancel();
+      _temporizador?.cancel();
+    });
+    return false;
+  }
+
+  /// Lo llama la pantalla de carga al verse por primera vez.
+  void empezar() {
+    if (_temporizador != null || state) return;
+    _temporizador = Timer(
+      ref.read(duracionCargaMinimaProvider),
+      () => state = true,
+    );
+  }
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  // Avisa al router cuando cambia la sesión para que vuelva a evaluar redirect.
+  // Avisa al router cuando cambia la sesión (o termina la pantalla de carga)
+  // para que vuelva a evaluar redirect.
   final cambiosSesion = ValueNotifier<int>(0);
   ref.listen(authControllerProvider, (_, _) => cambiosSesion.value++);
+  ref.listen(cargaMinimaCumplidaProvider, (_, _) => cambiosSesion.value++);
 
   final router = GoRouter(
     initialLocation: Rutas.inicio,
@@ -40,7 +86,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final sesion = ref.read(authControllerProvider);
       final ruta = state.matchedLocation;
-      if (sesion.isLoading && !sesion.hasValue) {
+      // La pantalla de carga se ve siempre al abrir la app (al menos 2 s),
+      // aunque la sesión ya esté guardada, y mientras se lee la sesión.
+      final cargando =
+          !ref.read(cargaMinimaCumplidaProvider) ||
+          (sesion.isLoading && !sesion.hasValue);
+      if (cargando) {
         return ruta == Rutas.cargando ? null : Rutas.cargando;
       }
       final autenticado = sesion.value != null;
@@ -51,7 +102,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: Rutas.cargando,
-        builder: (context, state) => const PantallaDeCarga(),
+        builder: (context, state) => PantallaDeCarga(
+          alMostrarse: () =>
+              ref.read(cargaMinimaCumplidaProvider.notifier).empezar(),
+        ),
       ),
       GoRoute(
         path: Rutas.login,
