@@ -260,7 +260,7 @@ class _DetallePlan extends ConsumerWidget {
             style: TextStyle(
               color: plan.debe ? Primitivos.ambar800 : Primitivos.verde800,
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: TipoTam.cuerpo,
             ),
           ),
           const SizedBox(height: 16),

@@ -213,7 +213,7 @@ class _Cabecera extends ConsumerWidget {
                     style: const TextStyle(
                       fontFamily: Fuentes.titulos,
                       fontWeight: FontWeight.w700,
-                      fontSize: 20,
+                      fontSize: TipoTam.subtitulo,
                     ),
                   ),
                 ),
