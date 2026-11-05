@@ -1,6 +1,6 @@
 # Rediseño de interfaz · Fases 3 y 4: Implementación y verificación
 
-Fecha: 2026-11-05 · Rama: `rediseno/ui-fase-1` (14 commits sobre `main`, sin publicar)
+Fecha: 2026-11-05 · Rama: `rediseno/ui-fase-1` (un commit por pantalla o cambio de sistema, sin publicar)
 
 Sistema aplicado a **toda la app**: [DESIGN.md](../../DESIGN.md) ·
 detalle y contraste en [02-sistema-de-diseno.md](02-sistema-de-diseno.md) ·
