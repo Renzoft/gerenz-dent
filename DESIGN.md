@@ -1,119 +1,168 @@
 ---
-name: GERENZ DENT (estado actual, v1.1.0)
-description: Sistema visual tal como está implementado antes del rediseño. Referencia del "antes", no la meta.
+name: GERENZ DENT · Consultorio claro (v2)
+description: Sistema de diseño de la app Android del consultorio. Código fuente en mobile/lib/core/theme/tokens.dart.
 colors:
-  celeste: "#3BB5E8"
-  celeste-claro: "#7FD6F5"
-  celeste-fondo: "#EAF7FD"
-  verde: "#22B573"
-  verde-oscuro: "#1E9E62"
-  verde-boton: "#17804F"
-  texto: "#1B2B33"
-  gris-texto: "#5E7A86"
-  error: "#C62828"
+  celeste-50: "#EFF9FD"
+  celeste-100: "#DAF1FB"
+  celeste-500: "#3BB5E8"
+  celeste-700: "#106C93"
+  celeste-800: "#0A5676"
+  verde-50: "#EEF9F4"
+  verde-500: "#22B573"
+  verde-600: "#1B925D"
+  verde-700: "#177D4F"
+  verde-800: "#13633F"
+  neutro-50: "#F7F9FB"
+  neutro-100: "#EFF4F5"
+  neutro-200: "#E0E8EB"
+  neutro-500: "#657C86"
+  neutro-600: "#506871"
+  neutro-700: "#3D535C"
+  neutro-900: "#19282E"
+  rojo-50: "#FDECEC"
+  rojo-700: "#A61F1F"
+  ambar-50: "#FFF6E0"
+  ambar-700: "#8F5A00"
+  ambar-800: "#6E4500"
   blanco: "#FFFFFF"
-  borde-tarjeta-inicio: "#DCE7EC"
 typography:
-  headline:
-    fontFamily: "Roboto"
-    fontSize: "24px"
-    fontWeight: 400
-  title:
-    fontFamily: "Roboto"
-    fontSize: "16px"
-    fontWeight: 500
-  body-large:
-    fontFamily: "Roboto"
-    fontSize: "18px"
-    fontWeight: 400
-  body:
-    fontFamily: "Roboto"
-    fontSize: "16px"
-    fontWeight: 400
-  button:
+  titular:
+    fontFamily: "Montserrat"
+    fontSize: "28px"
+    fontWeight: 700
+    lineHeight: 1.15
+    letterSpacing: "-0.4px"
+  titulo:
+    fontFamily: "Montserrat"
+    fontSize: "22px"
+    fontWeight: 600
+    lineHeight: 1.2
+  subtitulo:
     fontFamily: "Roboto"
     fontSize: "18px"
     fontWeight: 600
+  cuerpo:
+    fontFamily: "Roboto"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.4
+  etiqueta:
+    fontFamily: "Roboto"
+    fontSize: "14px"
+    fontWeight: 700
 rounded:
-  chip: "16px"
-  card: "12px"
-  card-inicio: "16px"
-  button: "999px"
+  control: "12px"
+  tarjeta: "16px"
+  hoja: "28px"
+  pildora: "999px"
 spacing:
   xs: "4px"
   sm: "8px"
-  md: "16px"
-  lg: "24px"
+  md: "12px"
+  lg: "16px"
+  xl: "24px"
+  xxl: "32px"
+  xxxl: "48px"
 components:
-  button-primary:
-    backgroundColor: "{colors.verde-boton}"
+  boton-principal:
+    backgroundColor: "{colors.verde-700}"
     textColor: "{colors.blanco}"
-    rounded: "{rounded.button}"
+    rounded: "{rounded.control}"
     height: "52px"
-  card-ficha:
-    backgroundColor: "{colors.celeste-fondo}"
-    rounded: "{rounded.card}"
-  card-inicio:
+  boton-secundario:
     backgroundColor: "{colors.blanco}"
-    rounded: "{rounded.card-inicio}"
+    textColor: "{colors.neutro-900}"
+    rounded: "{rounded.control}"
+    height: "52px"
+  boton-terciario:
+    textColor: "{colors.celeste-700}"
+    height: "48px"
+  tarjeta:
+    backgroundColor: "{colors.blanco}"
+    rounded: "{rounded.tarjeta}"
+  chip-estado-recordado:
+    backgroundColor: "{colors.celeste-50}"
+    textColor: "{colors.celeste-800}"
+    rounded: "{rounded.pildora}"
+  chip-estado-exito:
+    backgroundColor: "{colors.verde-50}"
+    textColor: "{colors.verde-800}"
+    rounded: "{rounded.pildora}"
+  chip-estado-aviso:
+    backgroundColor: "{colors.ambar-50}"
+    textColor: "{colors.ambar-800}"
+    rounded: "{rounded.pildora}"
+  chip-estado-peligro:
+    backgroundColor: "{colors.rojo-50}"
+    textColor: "{colors.rojo-700}"
+    rounded: "{rounded.pildora}"
+  chip-estado-neutro:
+    backgroundColor: "{colors.neutro-100}"
+    textColor: "{colors.neutro-700}"
+    rounded: "{rounded.pildora}"
 ---
 
-# DESIGN.md — estado actual (antes del rediseño)
+# DESIGN.md · GERENZ DENT (v2, "Consultorio claro")
 
-> Documenta lo que hay en `mobile/lib/core/theme/` y en las pantallas a la fecha (v1.1.0, 2026-11-04).
-> Es la línea base del rediseño; la Fase 2 lo reemplazará por el sistema nuevo.
+Fuente de verdad en código: `mobile/lib/core/theme/tokens.dart` (primitivos → semánticos → `Tono`),
+`app_theme.dart` (tema Material 3) y `mobile/lib/core/ui/componentes.dart`. Detalle y contraste:
+[docs/rediseno/02-sistema-de-diseno.md](docs/rediseno/02-sistema-de-diseno.md). Versión anterior:
+[docs/rediseno/DESIGN-v1.1.md](docs/rediseno/DESIGN-v1.1.md).
 
 ## Overview
 
-Material 3 casi por defecto: `ColorScheme.fromSeed(celeste)` con `primary` forzado al verde oscuro de botón.
-Sin escala tipográfica propia ni tokens de espaciado, radio o elevación; los valores se escriben a mano en cada
-pantalla. Inicio (v1.1) usa tarjetas blancas con borde; la ficha y la cuenta usan tarjetas celeste pálido sin
-borde. El resultado es limpio pero genérico, y cada pantalla habla un dialecto distinto.
+App de operación para un solo usuario no técnico. Fondo blanco levemente teñido de celeste, superficies
+blancas con borde fino, el celeste como estructura (cabeceras, pestaña activa, enlaces) y el verde **solo**
+en la acción principal de cada vista. Montserrat (la letra del logo) en titulares; Roboto en todo lo demás.
+Distribución 60 % neutros · 30 % celeste · 10 % verde.
 
 ## Colors
 
-- **Verde botón #17804F**: `colorScheme.primary`; botones rellenos, texto de TextButton, selección del calendario.
-- **Verde #22B573 / verde oscuro #1E9E62**: íconos de éxito, "Enviado", fecha del control, barra de avance.
-- **Celeste #3BB5E8**: `secondary`; ícono de "Hoy vienen", estado "Recordado", contador.
-- **Celeste fondo #EAF7FD**: fondo de `Card` por defecto (ficha, cuenta, datos) y de avatares.
-- **Tonos M3 derivados de la semilla** (no de marca): botón tonal "Agendar control"/"Registrar pago" (celeste
-  grisáceo), FAB, barra de navegación e indicador, fondo de hojas inferiores y diálogos.
-- **Error #C62828**: errores, deudas (todas), alergias, "No vinieron", "Vencido", "No vino".
-- Fuera de tokens: `#DCE7EC` (borde de tarjetas de Inicio) escrito dos veces a mano.
+- **Marca:** celeste #3BB5E8, blanco, verde #22B573. Los puros no se usan para texto ni íconos sobre blanco
+  (2.3:1 y 2.7:1); para eso, celeste-700/800 y verde-700/800.
+- **Funcionales (aprobados):** rojo (error, alergia, "No vino") y ámbar (vencido, deuda pendiente).
+- **Neutros** teñidos de celeste: fondo neutro-50, texto neutro-900 (15.2:1), secundario neutro-600 (5.9:1),
+  borde decorativo neutro-200, borde de control neutro-500 (4.4:1).
+- Todos los pares en uso cumplen WCAG 2.2 AA (tabla en el documento del sistema).
 
 ## Typography
 
-Roboto del sistema. `bodyLarge` 18, `bodyMedium` 16, botones 18/600. El resto, valores por defecto de M3 y
-~10 `fontSize` literales (16, 17, 18). Los títulos de sección ("Próximo control", "Historial", "Deuda") usan
-`titleMedium` (16/500): se confunden con el cuerpo.
+Cinco tamaños: 28 (titular, Montserrat 700) · 22 (título, Montserrat 600) · 18 (subtítulo, Roboto 600) ·
+16 (cuerpo, mínimo) · 14 (solo chips y etiquetas cortas). Todo en sp: sigue la letra del sistema; probado
+al 200 %.
 
 ## Layout
 
-Una columna, padding 16. Separaciones 4/8/12/16/20/24 sin escala definida. Barra inferior M3 con 4 destinos.
-Formularios en hojas inferiores con scroll.
+Una columna, margen de pantalla 16, escala 4/8. Más espacio arriba de un título (24) que debajo (8).
+Las filas con una acción a la derecha la pasan debajo cuando la letra del sistema es ≥ 150 %
+(`letraGrande`). Montos, horas ("p. m.") y teléfonos nunca se parten.
 
 ## Elevation & Depth
 
-Plano: tarjetas con elevación 0; el FAB es lo único con sombra.
+Plano: blanco sobre neutro-50 más un borde de 1 px. Sombra solo en el botón flotante y en las hojas de
+Material.
 
 ## Shapes
 
-Botones en píldora (M3), tarjetas de 12 (defecto) o 16 (Inicio), chips de estado de 16, campos con borde
-rectangular de 4.
+Controles 12 · tarjetas 16 · hojas y diálogos 28 · chips en píldora. Nunca una tarjeta dentro de otra.
 
 ## Components
 
-- **Botón principal**: FilledButton verde, 52 dp de alto.
-- **Botón secundario**: OutlinedButton (borde gris) o FilledButton.tonal (celeste grisáceo M3), sin regla.
-- **Tarjeta de control**: tratamiento + chip de estado + menú ⋮, fecha grande en verde/rojo, botones Asistió ·
-  No vino · Reprogramar.
-- **Chip de estado**: texto del color del estado sobre tinte al 12 %, sin ícono.
-- **Fila de paciente**: avatar con inicial, nombre 18, WhatsApp; chevron o ícono de alergia.
-- **Estados**: `VistaCargando` (spinner), `VistaError` (ícono + Reintentar), `confirmar()` (AlertDialog),
-  `mostrarMensaje()` (SnackBar sin "Deshacer").
+- **Botón principal:** relleno verde-700, texto blanco 18/600, alto 52. Uno por vista; si hay varios
+  controles, solo el más cercano lo lleva.
+- **Secundario:** contorno neutro-500. **Terciario:** texto celeste-700.
+- **Chip de estado:** ícono + texto sobre su tono; TalkBack lee "Estado: …". Mapa de estados en
+  `estado_visual.dart`.
+- **Aviso:** fondo del tono, ícono y texto 16 (alergias, errores con "Reintentar").
+- **Hoja de opciones:** reemplaza al menú ⋮; cada opción con nombre, explicación e ícono.
+- **Esqueleto:** carga con la forma del contenido; sin pulso si el sistema pide quitar animaciones.
+- **Estado vacío:** ícono + qué pasa + qué hacer.
 
 ## Do's and Don'ts
 
-- Do: texto base ≥ 16 y botones ≥ 52 dp (ya se cumple).
-- Don't: escribir colores o tamaños a mano en las pantallas (hoy ocurre).
-- Don't: comunicar estados solo con color o con tintes de bajo contraste (hoy ocurre).
+- Do: usar `Tokens`, `Tono`, `Espacio`, `Radios` y `TipoTam`; nunca un hex o un tamaño suelto.
+- Do: estado = ícono + texto + tono. Nunca solo color.
+- Do: verbos en los botones ("Guardar paciente", "Agendar control").
+- Don't: dos botones verdes en la misma vista.
+- Don't: texto celeste-500 o verde-500 sobre blanco.
+- Don't: esconder acciones en ⋮ cuando el doctor las necesita a diario.

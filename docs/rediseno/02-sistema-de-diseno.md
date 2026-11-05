@@ -5,8 +5,8 @@ Fecha: 2026-11-05 · Rama: `rediseno/ui-fase-1` · Piloto: **ficha del paciente*
 Código: tokens en [`mobile/lib/core/theme/tokens.dart`](../../mobile/lib/core/theme/tokens.dart), tema en
 [`app_theme.dart`](../../mobile/lib/core/theme/app_theme.dart) (`AppTheme.nuevo`) y componentes en
 [`mobile/lib/core/ui/componentes.dart`](../../mobile/lib/core/ui/componentes.dart).
-Por ahora **solo la ficha** usa el tema nuevo (envuelta en `Theme(AppTheme.nuevo)`); el resto de la app sigue
-igual hasta la Fase 3.
+> Actualización (Fase 3): el sistema ya se aplica a toda la app; `AppTheme.claro` es el tema v2 y
+> `AppColors` se eliminó. Ver [03-informe-final.md](03-informe-final.md).
 
 ## Dirección
 
