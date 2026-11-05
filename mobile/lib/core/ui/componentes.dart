@@ -8,8 +8,12 @@ import '../theme/tokens.dart';
 /// texto.
 
 /// Evita que "p. m." o "a. m." se partan en dos líneas con letra grande.
-String sinCortes(String texto) =>
-    texto.replaceAll('p. m.', 'p. m.').replaceAll('a. m.', 'a. m.');
+String sinCortes(String texto) => texto
+    .replaceAll(' p. m.', '${_nbsp}p.${_nbsp}m.')
+    .replaceAll(' a. m.', '${_nbsp}a.${_nbsp}m.');
+
+/// Espacio que no permite salto de línea (U+00A0).
+final _nbsp = String.fromCharCode(0x00A0);
 
 /// Pestaña cuyo texto se achica (en vez de cortarse) con letra muy grande.
 class PestanaTexto extends StatelessWidget {

@@ -264,6 +264,8 @@ void main() {
     await montar(tester);
 
     expect(find.text('Brackets (ortodoncia) · hace 3 días'), findsOneWidget);
+    await tester.ensureVisible(find.text('Escribirle'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Escribirle'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sí, se envió'));
