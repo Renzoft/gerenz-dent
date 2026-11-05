@@ -315,37 +315,46 @@ class FilaHistorial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final datos = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          control.tratamientoNombre,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 2),
+        // Día real en que se cerró; si no se conoce, la planificada.
+        Text(
+          Fechas.corta(control.cerradoEn ?? control.fecha),
+          style: const TextStyle(
+            fontSize: TipoTam.cuerpo,
+            color: Tokens.textoSecundario,
+          ),
+        ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: Espacio.lg,
         vertical: Espacio.md,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
+      // Con letra muy grande el estado va debajo, para no aplastar el nombre.
+      child: letraGrande(context)
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  control.tratamientoNombre,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 2),
-                // Día real en que se cerró; si no se conoce, la planificada.
-                Text(
-                  Fechas.corta(control.cerradoEn ?? control.fecha),
-                  style: const TextStyle(
-                    fontSize: TipoTam.cuerpo,
-                    color: Tokens.textoSecundario,
-                  ),
-                ),
+                datos,
+                const SizedBox(height: Espacio.sm),
+                chipDeControl(control),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: datos),
+                const SizedBox(width: Espacio.sm),
+                chipDeControl(control),
               ],
             ),
-          ),
-          const SizedBox(width: Espacio.sm),
-          chipDeControl(control),
-        ],
-      ),
     );
   }
 }

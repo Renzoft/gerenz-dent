@@ -129,6 +129,41 @@ class _FilaDeuda extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final monto = Text(
+      Moneda.formatear(this.monto),
+      style: const TextStyle(
+        fontSize: TipoTam.cuerpo,
+        fontWeight: FontWeight.w700,
+        color: Primitivos.ambar800,
+        fontFeatures: [FontFeature.tabularFigures()],
+      ),
+    );
+    // Con letra grande o pantalla angosta, el monto va debajo del nombre:
+    // un monto nunca se corta.
+    final angosta = MediaQuery.sizeOf(context).width < 360;
+    if (letraGrande(context) || angosta) {
+      return InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(Espacio.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(nombre, style: Theme.of(context).textTheme.titleSmall),
+              if (archivado)
+                const Text(
+                  'Archivado',
+                  style: TextStyle(
+                    fontSize: TipoTam.cuerpo,
+                    color: Tokens.textoSecundario,
+                  ),
+                ),
+              monto,
+            ],
+          ),
+        ),
+      );
+    }
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
@@ -159,15 +194,7 @@ class _FilaDeuda extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: Espacio.sm),
-              Text(
-                Moneda.formatear(monto),
-                style: const TextStyle(
-                  fontSize: TipoTam.cuerpo,
-                  fontWeight: FontWeight.w700,
-                  color: Primitivos.ambar800,
-                  fontFeatures: [FontFeature.tabularFigures()],
-                ),
-              ),
+              monto,
               const Icon(Icons.chevron_right, color: Tokens.textoSecundario),
             ],
           ),

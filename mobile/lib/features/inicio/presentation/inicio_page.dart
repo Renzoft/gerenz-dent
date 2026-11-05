@@ -434,35 +434,52 @@ class _FilaPaciente extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final datos = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(nombre, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 2),
+        Text(
+          sinCortes(detalle),
+          style: const TextStyle(
+            fontSize: TipoTam.cuerpo,
+            color: Tokens.textoSecundario,
+          ),
+        ),
+      ],
+    );
+    const relleno = EdgeInsets.fromLTRB(
+      Espacio.lg,
+      Espacio.md,
+      Espacio.sm,
+      Espacio.md,
+    );
+    // Con letra muy grande la acción no cabe al lado: va debajo.
+    if (accion != null && letraGrande(context)) {
+      return InkWell(
+        onTap: () => context.push(Rutas.paciente(pacienteId)),
+        child: Padding(
+          padding: relleno,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              datos,
+              const SizedBox(height: Espacio.xs),
+              accion!,
+            ],
+          ),
+        ),
+      );
+    }
     return InkWell(
       onTap: () => context.push(Rutas.paciente(pacienteId)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Espacio.lg,
-            Espacio.md,
-            Espacio.sm,
-            Espacio.md,
-          ),
+          padding: relleno,
           child: Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(nombre, style: Theme.of(context).textTheme.titleSmall),
-                    const SizedBox(height: 2),
-                    Text(
-                      sinCortes(detalle),
-                      style: const TextStyle(
-                        fontSize: TipoTam.cuerpo,
-                        color: Tokens.textoSecundario,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              Expanded(child: datos),
               const SizedBox(width: Espacio.sm),
               accion ??
                   const Padding(

@@ -15,6 +15,12 @@ String sinCortes(String texto) => texto
 /// Espacio que no permite salto de línea (U+00A0).
 final _nbsp = String.fromCharCode(0x00A0);
 
+/// `true` con la letra del sistema al 150 % o más: las filas con una acción a
+/// la derecha la pasan debajo para que nada se desborde.
+bool letraGrande(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(TipoTam.cuerpo) >=
+    TipoTam.cuerpo * 1.5;
+
 /// Pestaña cuyo texto se achica (en vez de cortarse) con letra muy grande.
 class PestanaTexto extends StatelessWidget {
   const PestanaTexto(this.texto, {super.key});

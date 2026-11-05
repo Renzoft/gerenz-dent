@@ -91,7 +91,11 @@ class _PacientesPageState extends ConsumerState<PacientesPage> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Espacio.pantalla),
-            child: Row(
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: Espacio.md,
+              runSpacing: Espacio.sm,
               children: [
                 FilterChip(
                   label: const Text('Archivados'),
@@ -103,7 +107,6 @@ class _PacientesPageState extends ConsumerState<PacientesPage> {
                       .read(filtroPacientesProvider.notifier)
                       .verArchivados(archivados: v),
                 ),
-                const Spacer(),
                 if (lista.value case final datos?)
                   Text(
                     '${datos.total} paciente${datos.total == 1 ? '' : 's'}',
