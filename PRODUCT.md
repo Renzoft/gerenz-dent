@@ -76,4 +76,8 @@ WCAG 2.2 AA (4.5:1 texto, 3:1 texto grande/íconos/bordes de controles). Texto b
 funcionar con el tamaño de fuente del sistema al máximo (200 %). Áreas táctiles ≥ 48 dp. Etiquetas para
 TalkBack. Respetar "reducir movimiento". Sin modo oscuro por ahora.
 
-<!-- Pendiente de confirmar con el usuario: si el doctor usa el tamaño de letra del sistema agrandado. -->
+El doctor usa el tamaño de letra del sistema por defecto (confirmado). El 200 % se sigue probando como
+requisito, pero el diseño se optimiza para el tamaño normal.
+
+Estados: la paleta de marca se complementa con colores funcionales aprobados (rojo para error/alergia/vencido
+y ámbar para pendientes), siempre acompañados de ícono y texto.
