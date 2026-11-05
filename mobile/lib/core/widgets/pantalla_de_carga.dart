@@ -8,14 +8,34 @@ import '../theme/tokens.dart';
 ///
 /// Sigue al fondo nativo (mismo celeste profundo), así que no hay salto de
 /// color al pasar de Android a Flutter.
-class PantallaDeCarga extends StatelessWidget {
-  const PantallaDeCarga({super.key});
+class PantallaDeCarga extends StatefulWidget {
+  const PantallaDeCarga({super.key, this.alMostrarse});
+
+  /// Se llama una vez, cuando el logo ya está dibujado en pantalla (desde ahí
+  /// cuenta el tiempo mínimo que se ve).
+  final VoidCallback? alMostrarse;
 
   /// Celeste profundo del ícono (también en android/.../values/colors.xml).
   static const fondo = Color(0xFF0A5676);
 
   @override
+  State<PantallaDeCarga> createState() => _PantallaDeCargaState();
+}
+
+class _PantallaDeCargaState extends State<PantallaDeCarga> {
+  var _avisado = false;
+
+  void _avisarSiSeVe(int? cuadro) {
+    if (_avisado || cuadro == null) return;
+    _avisado = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.alMostrarse?.call();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    const fondo = PantallaDeCarga.fondo;
     final abajo = MediaQuery.paddingOf(context).bottom;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -53,6 +73,10 @@ class PantallaDeCarga extends StatelessWidget {
                 'assets/branding/carga-centro.png',
                 width: 256,
                 semanticLabel: 'GERENZ DENT, consultorio odontológico',
+                frameBuilder: (context, child, cuadro, sincrono) {
+                  _avisarSiSeVe(cuadro);
+                  return child;
+                },
               ),
             ),
             Positioned(
