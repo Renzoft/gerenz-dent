@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/formato/fechas.dart';
 import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../../cuenta/application/cuenta_providers.dart';
 import '../../cuenta/domain/cuenta.dart';
@@ -46,12 +47,15 @@ class _Atajo {
 }
 
 final _atajos = [
-  _Atajo('+1 sem', (h) => h.add(const Duration(days: 7))),
-  _Atajo('+15 d', (h) => h.add(const Duration(days: 15))),
-  _Atajo('+1 mes', (h) => h.add(const Duration(days: 30))),
-  _Atajo('+3 m', (h) => h.add(const Duration(days: 90))),
-  _Atajo('+6 m', (h) => h.add(const Duration(days: 180))),
+  _Atajo('En 1 semana', (h) => h.add(const Duration(days: 7))),
+  _Atajo('En 15 días', (h) => h.add(const Duration(days: 15))),
+  _Atajo('En 1 mes', (h) => h.add(const Duration(days: 30))),
+  _Atajo('En 3 meses', (h) => h.add(const Duration(days: 90))),
+  _Atajo('En 6 meses', (h) => h.add(const Duration(days: 180))),
 ];
+
+/// Dónde mostrar un error: junto al campo que hay que corregir.
+enum _Campo { tratamiento, fecha, costo, pago, general }
 
 class AgendarControlSheet extends ConsumerStatefulWidget {
   const AgendarControlSheet({
@@ -83,6 +87,7 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
   int _piezas = 1;
   bool _guardando = false;
   String? _error;
+  _Campo _errorEn = _Campo.general;
 
   // Cobro (solo si este control crea un plan nuevo).
   final _costo = TextEditingController();
@@ -123,7 +128,7 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
   Future<void> _elegirTratamiento(Tratamiento? t) async {
     setState(() {
       _tratamiento = t;
-      _error = null;
+      if (_errorEn == _Campo.tratamiento) _error = null;
       _costoEditado = false;
       _actualizarCosto();
     });
@@ -167,11 +172,17 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
 
   Future<void> _guardar() async {
     if (_tratamiento == null) {
-      setState(() => _error = 'Elige el tratamiento');
+      setState(() {
+        _error = 'Elige el tratamiento';
+        _errorEn = _Campo.tratamiento;
+      });
       return;
     }
     if (_fecha == null) {
-      setState(() => _error = 'Elige la fecha del control');
+      setState(() {
+        _error = 'Elige la fecha del control';
+        _errorEn = _Campo.fecha;
+      });
       return;
     }
     final planNuevo = _esPlanNuevo(
@@ -183,18 +194,27 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
       if (_costo.text.trim().isNotEmpty) {
         costo = Moneda.leer(_costo.text);
         if (costo == null || costo < 0) {
-          setState(() => _error = 'Revisa el costo');
+          setState(() {
+            _error = 'Escribe el costo solo con números (ej.: 150)';
+            _errorEn = _Campo.costo;
+          });
           return;
         }
       }
       if (_pagoHoy.text.trim().isNotEmpty) {
         pagoHoy = Moneda.leer(_pagoHoy.text);
         if (pagoHoy == null || pagoHoy <= 0) {
-          setState(() => _error = 'Revisa el monto pagado');
+          setState(() {
+            _error = 'Escribe el monto solo con números (ej.: 50)';
+            _errorEn = _Campo.pago;
+          });
           return;
         }
         if (costo != null && pagoHoy > costo) {
-          setState(() => _error = 'Lo pagado no puede ser mayor que el costo');
+          setState(() {
+            _error = 'Lo pagado no puede ser mayor que el costo';
+            _errorEn = _Campo.pago;
+          });
           return;
         }
       }
@@ -224,12 +244,17 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
       Navigator.of(context).pop(creado);
     } on ApiError catch (e) {
       if (mounted) {
-        setState(() => _error = e.errores.values.firstOrNull ?? e.mensaje);
+        setState(() {
+          _error = e.errores.values.firstOrNull ?? e.mensaje;
+          _errorEn = _Campo.general;
+        });
       }
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
   }
+
+  String? _errorDe(_Campo campo) => _errorEn == campo ? _error : null;
 
   @override
   Widget build(BuildContext context) {
@@ -239,9 +264,9 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
 
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+        left: Espacio.xl,
+        right: Espacio.xl,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + Espacio.lg,
       ),
       child: catalogo.when(
         loading: () => const SizedBox(height: 240, child: VistaCargando()),
@@ -264,17 +289,23 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text('Próximo control', style: textos.titleLarge),
+                const SizedBox(height: Espacio.xs),
                 Text(
                   widget.pacienteNombre,
-                  style: textos.bodyLarge?.copyWith(color: AppColors.grisTexto),
+                  style: const TextStyle(
+                    fontSize: TipoTam.cuerpo,
+                    color: Tokens.textoSecundario,
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Espacio.xl),
                 DropdownMenu<Tratamiento>(
                   key: const Key('tratamiento'),
                   expandedInsets: EdgeInsets.zero,
-                  label: const Text('Tratamiento *'),
+                  label: const Text('Tratamiento'),
+                  leadingIcon: const Icon(Icons.medical_services_outlined),
                   initialSelection: _tratamiento,
                   menuHeight: 360,
+                  errorText: _errorDe(_Campo.tratamiento),
                   onSelected: _elegirTratamiento,
                   dropdownMenuEntries: [
                     for (final t in tratamientos)
@@ -282,11 +313,15 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
                   ],
                 ),
                 if (_tratamiento?.esPorPieza ?? false) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Espacio.lg),
                   Row(
                     children: [
-                      const Text('Piezas', style: TextStyle(fontSize: 16)),
-                      const Spacer(),
+                      const Expanded(
+                        child: Text(
+                          'Piezas',
+                          style: TextStyle(fontSize: TipoTam.cuerpo),
+                        ),
+                      ),
                       IconButton.outlined(
                         tooltip: 'Menos piezas',
                         onPressed: _piezas > 1
@@ -298,7 +333,9 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
                         icon: const Icon(Icons.remove),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Espacio.lg,
+                        ),
                         child: Text('$_piezas', style: textos.titleLarge),
                       ),
                       IconButton.outlined(
@@ -314,19 +351,25 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
                     ],
                   ),
                 ],
-                const SizedBox(height: 16),
-                Text('Fecha *', style: textos.titleSmall),
-                const SizedBox(height: 8),
+                const SizedBox(height: Espacio.xl),
+                Semantics(
+                  header: true,
+                  child: Text('¿Cuándo vuelve?', style: textos.titleSmall),
+                ),
+                const SizedBox(height: Espacio.sm),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: Espacio.sm,
+                  runSpacing: Espacio.sm,
                   children: [
                     for (final atajo in _atajos)
                       _ChipFecha(
                         etiqueta: atajo.etiqueta,
                         fecha: atajo.calcular(_hoy),
                         seleccionada: _fecha,
-                        onSeleccionar: (f) => setState(() => _fecha = f),
+                        onSeleccionar: (f) => setState(() {
+                          _fecha = f;
+                          if (_errorEn == _Campo.fecha) _error = null;
+                        }),
                       ),
                     ActionChip(
                       avatar: const Icon(Icons.calendar_month, size: 18),
@@ -335,65 +378,54 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _fecha == null
-                      ? 'Sin fecha elegida'
-                      : _capitalizar(Fechas.larga(_fecha!)),
+                const SizedBox(height: Espacio.md),
+                _FechaElegida(
                   key: const Key('fecha-elegida'),
-                  style: textos.titleMedium?.copyWith(
-                    color: _fecha == null
-                        ? AppColors.grisTexto
-                        : AppColors.verdeOscuro,
-                  ),
-                ),
-                if (_fechaSugerida != null)
-                  Text(
-                    'Sugerida por el tratamiento: ${Fechas.corta(_fechaSugerida!)}',
-                    style: const TextStyle(color: AppColors.grisTexto),
-                  ),
-                const SizedBox(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.schedule),
-                  title: Text(
-                    _hora == null ? 'Hora (opcional)' : Fechas.hora(_hora!),
-                  ),
-                  subtitle: _hora == null
-                      ? const Text(
-                          'Si no la eliges, se usa la hora de apertura',
-                        )
-                      : null,
-                  trailing: _hora == null
+                  texto: _fecha == null
+                      ? 'Elige una fecha'
+                      : _capitalizar(Fechas.larga(_fecha!)),
+                  elegida: _fecha != null,
+                  detalle: _fechaSugerida == null
                       ? null
-                      : IconButton(
-                          tooltip: 'Quitar hora',
-                          icon: const Icon(Icons.close),
-                          onPressed: () => setState(() => _hora = null),
-                        ),
-                  onTap: _elegirHora,
+                      : 'Sugerida por el tratamiento: ${Fechas.corta(_fechaSugerida!)}',
+                  error: _errorDe(_Campo.fecha),
                 ),
+                const SizedBox(height: Espacio.lg),
+                _CampoHora(
+                  hora: _hora,
+                  onElegir: _elegirHora,
+                  onQuitar: () => setState(() => _hora = null),
+                ),
+                const SizedBox(height: Espacio.lg),
                 TextField(
                   controller: _nota,
                   maxLength: 140,
+                  textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
                     labelText: 'Nota (opcional)',
                     hintText: 'Ej.: cambio de ligas',
-                    border: OutlineInputBorder(),
                   ),
                 ),
                 if (_esPlanNuevo(cuenta)) ..._camposCobro(textos),
-                if (_error != null) ...[
-                  Text(
-                    _error!,
+                if (_errorDe(_Campo.general) case final error?) ...[
+                  Aviso(
                     key: const Key('agendar-error'),
-                    style: const TextStyle(color: AppColors.error),
+                    tono: Tono.peligro,
+                    icono: Icons.error_outline,
+                    texto: error,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Espacio.md),
                 ],
-                FilledButton(
+                const SizedBox(height: Espacio.sm),
+                FilledButton.icon(
                   onPressed: _guardando ? null : _guardar,
-                  child: Text(_guardando ? 'Guardando…' : 'Agendar control'),
+                  icon: _guardando
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.event_available),
+                  label: Text(_guardando ? 'Guardando…' : 'Agendar control'),
                 ),
               ],
             ),
@@ -411,9 +443,11 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
         ? ''
         : Moneda.formatear(t.precioMensual!);
     return [
-      const Divider(height: 24),
-      Text('Cobro', style: textos.titleSmall),
-      const SizedBox(height: 8),
+      const SizedBox(height: Espacio.sm),
+      const Divider(),
+      const SizedBox(height: Espacio.lg),
+      Semantics(header: true, child: Text('Cobro', style: textos.titleSmall)),
+      const SizedBox(height: Espacio.md),
       TextField(
         key: const Key('costo'),
         controller: _costo,
@@ -424,26 +458,35 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
           helperText: mensual && cuota.isNotEmpty
               ? 'Luego $cuota cada vez que asista'
               : 'Puedes cambiarlo si haces un descuento',
+          errorText: _errorDe(_Campo.costo),
           prefixText: 'S/ ',
-          border: const OutlineInputBorder(),
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Espacio.lg),
       TextField(
         key: const Key('pago-hoy'),
         controller: _pagoHoy,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           labelText: 'Pagó hoy (opcional)',
+          errorText: _errorDe(_Campo.pago),
           prefixText: 'S/ ',
-          border: OutlineInputBorder(),
         ),
         onChanged: (_) => setState(() {}),
       ),
       if (_pagoHoy.text.trim().isNotEmpty) ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: Espacio.md),
+        const Text(
+          '¿Cómo pagó?',
+          style: TextStyle(
+            fontSize: TipoTam.cuerpo,
+            color: Tokens.textoSecundario,
+          ),
+        ),
+        const SizedBox(height: Espacio.sm),
         Wrap(
-          spacing: 8,
+          spacing: Espacio.sm,
+          runSpacing: Espacio.sm,
           children: [
             for (final m in MedioPago.values)
               ChoiceChip(
@@ -454,7 +497,7 @@ class _AgendarControlSheetState extends ConsumerState<AgendarControlSheet> {
           ],
         ),
       ],
-      const SizedBox(height: 12),
+      const SizedBox(height: Espacio.lg),
     ];
   }
 
@@ -482,6 +525,147 @@ class _ChipFecha extends StatelessWidget {
       selected:
           seleccionada != null && DateUtils.isSameDay(seleccionada, fecha),
       onSelected: (_) => onSeleccionar(fecha),
+    );
+  }
+}
+
+/// La fecha elegida, grande y en una caja, con la sugerencia debajo.
+class _FechaElegida extends StatelessWidget {
+  const _FechaElegida({
+    super.key,
+    required this.texto,
+    required this.elegida,
+    this.detalle,
+    this.error,
+  });
+
+  final String texto;
+  final bool elegida;
+  final String? detalle;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    final conError = error != null;
+    return Container(
+      padding: const EdgeInsets.all(Espacio.md),
+      decoration: BoxDecoration(
+        color: conError
+            ? Tokens.errorSuave
+            : (elegida ? Tokens.superficieMarca : Primitivos.neutro100),
+        borderRadius: BorderRadius.circular(Radios.control),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            conError ? Icons.error_outline : Icons.event,
+            color: conError
+                ? Tokens.error
+                : (elegida ? Tokens.marcaFuerte : Tokens.textoSecundario),
+          ),
+          const SizedBox(width: Espacio.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  error ?? texto,
+                  style: TextStyle(
+                    fontSize: TipoTam.subtitulo,
+                    fontWeight: FontWeight.w600,
+                    color: conError
+                        ? Tokens.error
+                        : (elegida ? Tokens.texto : Tokens.textoSecundario),
+                  ),
+                ),
+                if (detalle != null && !conError)
+                  Text(
+                    detalle!,
+                    style: const TextStyle(
+                      fontSize: TipoTam.cuerpo,
+                      color: Tokens.textoSecundario,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Hora opcional con el aspecto de un campo (se toca para elegirla).
+class _CampoHora extends StatelessWidget {
+  const _CampoHora({
+    required this.hora,
+    required this.onElegir,
+    required this.onQuitar,
+  });
+
+  final TimeOfDay? hora;
+  final VoidCallback onElegir;
+  final VoidCallback onQuitar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Tokens.superficie,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radios.control),
+        side: const BorderSide(color: Tokens.bordeControl),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Radios.control),
+        onTap: onElegir,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Espacio.lg,
+            Espacio.sm,
+            Espacio.xs,
+            Espacio.sm,
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.schedule, color: Tokens.textoSecundario),
+              const SizedBox(width: Espacio.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hora == null ? 'Hora (opcional)' : Fechas.hora(hora!),
+                      style: TextStyle(
+                        fontSize: TipoTam.cuerpo,
+                        fontWeight: hora == null
+                            ? FontWeight.w400
+                            : FontWeight.w600,
+                        color: Tokens.texto,
+                      ),
+                    ),
+                    if (hora == null)
+                      const Text(
+                        'Si no la eliges, se usa la hora de apertura',
+                        style: TextStyle(
+                          fontSize: TipoTam.etiqueta,
+                          color: Tokens.textoSecundario,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (hora != null)
+                IconButton(
+                  tooltip: 'Quitar hora',
+                  icon: const Icon(Icons.close),
+                  onPressed: onQuitar,
+                )
+              else
+                const SizedBox(height: 48),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

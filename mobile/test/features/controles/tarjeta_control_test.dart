@@ -113,7 +113,9 @@ void main() {
     expect(find.textContaining('Sugerida por el tratamiento'), findsOneWidget);
   });
 
-  testWidgets('"No vino" cambia el estado sin preguntar', (tester) async {
+  testWidgets('"No vino" está en "Otras opciones" y cambia el estado', (
+    tester,
+  ) async {
     when(
       () => controles.cambiarEstado('c-1', EstadoControl.noAsistio),
     ).thenAnswer(
@@ -123,6 +125,12 @@ void main() {
     );
     await montar(tester, controlPrueba());
 
+    // La tarjeta muestra una sola acción principal; el resto va en la hoja.
+    expect(find.text('No vino'), findsNothing);
+    await tester.tap(find.text('Otras opciones'));
+    await tester.pumpAndSettle();
+    expect(find.text('Cambiar fecha'), findsOneWidget);
+    expect(find.text('El paciente confirmó'), findsOneWidget);
     await tester.tap(find.text('No vino'));
     await tester.pumpAndSettle();
 
@@ -135,13 +143,13 @@ void main() {
   testWidgets('cancelar pide confirmación', (tester) async {
     await montar(tester, controlPrueba());
 
-    await tester.tap(find.byTooltip('Más acciones'));
+    await tester.tap(find.text('Otras opciones'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancelar control'));
     await tester.pumpAndSettle();
 
     expect(find.text('Cancelar control'), findsWidgets);
-    await tester.tap(find.text('Cancelar'));
+    await tester.tap(find.text('No, volver'));
     await tester.pumpAndSettle();
     verifyNever(() => controles.cambiarEstado(any(), any()));
   });

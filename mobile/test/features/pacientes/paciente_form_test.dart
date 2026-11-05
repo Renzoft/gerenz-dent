@@ -53,7 +53,7 @@ void main() {
   testWidgets('exige nombre y WhatsApp', (tester) async {
     await montar(tester);
 
-    await tester.tap(find.text('Guardar'));
+    await tester.tap(find.text('Guardar paciente'));
     await tester.pump();
 
     expect(find.text('Ingresa el nombre'), findsOneWidget);
@@ -64,9 +64,9 @@ void main() {
   testWidgets('avisa si el número no es válido', (tester) async {
     await montar(tester);
 
-    await tester.enterText(campo('Nombre *'), 'Juan');
-    await tester.enterText(campo('WhatsApp *'), '12345');
-    await tester.tap(find.text('Guardar'));
+    await tester.enterText(campo('Nombre completo'), 'Juan');
+    await tester.enterText(campo('WhatsApp'), '12345');
+    await tester.tap(find.text('Guardar paciente'));
     await tester.pump();
 
     expect(find.text('Celular de 9 dígitos que empiece con 9'), findsOneWidget);
@@ -78,9 +78,9 @@ void main() {
     ).thenAnswer((_) async => pacientePrueba(id: 'nuevo-1'));
     await montar(tester);
 
-    await tester.enterText(campo('Nombre *'), '  Juan Pérez ');
-    await tester.enterText(campo('WhatsApp *'), '987 654 321');
-    await tester.tap(find.text('Guardar'));
+    await tester.enterText(campo('Nombre completo'), '  Juan Pérez ');
+    await tester.enterText(campo('WhatsApp'), '987 654 321');
+    await tester.tap(find.text('Guardar paciente'));
     await tester.pumpAndSettle();
 
     final enviado =
@@ -105,9 +105,9 @@ void main() {
     );
     await montar(tester);
 
-    await tester.enterText(campo('Nombre *'), 'Juan');
-    await tester.enterText(campo('WhatsApp *'), '987654321');
-    await tester.tap(find.text('Guardar'));
+    await tester.enterText(campo('Nombre completo'), 'Juan');
+    await tester.enterText(campo('WhatsApp'), '987654321');
+    await tester.tap(find.text('Guardar paciente'));
     await tester.pumpAndSettle();
 
     expect(find.text('Número ya registrado'), findsOneWidget);
@@ -128,9 +128,9 @@ void main() {
     );
     await montar(tester);
 
-    await tester.enterText(campo('Nombre *'), 'Juan');
-    await tester.enterText(campo('WhatsApp *'), '987654321');
-    await tester.tap(find.text('Guardar'));
+    await tester.enterText(campo('Nombre completo'), 'Juan');
+    await tester.enterText(campo('WhatsApp'), '987654321');
+    await tester.tap(find.text('Guardar paciente'));
     await tester.pumpAndSettle();
 
     expect(

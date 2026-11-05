@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../data/cuenta_repository.dart';
 import '../domain/cuenta.dart';
 
@@ -51,6 +52,9 @@ class _RegistrarPagoSheetState extends ConsumerState<RegistrarPagoSheet> {
   bool _guardando = false;
   String? _error;
 
+  /// El error es del monto (se muestra en el campo) o de la API (abajo).
+  bool _errorDelMonto = false;
+
   @override
   void dispose() {
     _monto.dispose();
@@ -61,14 +65,17 @@ class _RegistrarPagoSheetState extends ConsumerState<RegistrarPagoSheet> {
   Future<void> _guardar() async {
     final monto = Moneda.leer(_monto.text);
     if (monto == null || monto <= 0) {
-      setState(() => _error = 'Ingresa el monto pagado');
+      setState(() {
+        _error = 'Escribe cuánto pagó (ej.: 50)';
+        _errorDelMonto = true;
+      });
       return;
     }
     if (monto > widget.saldo + 0.001) {
-      setState(
-        () => _error =
-            'El pago supera la deuda de ${Moneda.formatear(widget.saldo)}',
-      );
+      setState(() {
+        _error = 'El pago supera la deuda de ${Moneda.formatear(widget.saldo)}';
+        _errorDelMonto = true;
+      });
       return;
     }
     setState(() {
@@ -87,7 +94,10 @@ class _RegistrarPagoSheetState extends ConsumerState<RegistrarPagoSheet> {
       if (mounted) Navigator.of(context).pop(true);
     } on ApiError catch (e) {
       if (mounted) {
-        setState(() => _error = e.errores.values.firstOrNull ?? e.mensaje);
+        setState(() {
+          _error = e.errores.values.firstOrNull ?? e.mensaje;
+          _errorDelMonto = false;
+        });
       }
     } finally {
       if (mounted) setState(() => _guardando = false);
@@ -99,44 +109,70 @@ class _RegistrarPagoSheetState extends ConsumerState<RegistrarPagoSheet> {
     final textos = Theme.of(context).textTheme;
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+        left: Espacio.xl,
+        right: Espacio.xl,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + Espacio.lg,
       ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Registrar pago', style: textos.titleLarge),
+            const SizedBox(height: Espacio.xs),
             Text(
-              '${widget.tratamiento} · debe ${Moneda.formatear(widget.saldo)}',
-              style: textos.bodyLarge?.copyWith(color: AppColors.grisTexto),
+              widget.tratamiento,
+              style: const TextStyle(
+                fontSize: TipoTam.cuerpo,
+                color: Tokens.textoSecundario,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espacio.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ChipEstado(
+                tono: Tono.aviso,
+                icono: Icons.schedule,
+                texto: 'Debe ${Moneda.formatear(widget.saldo)}',
+              ),
+            ),
+            const SizedBox(height: Espacio.xl),
             TextField(
               controller: _monto,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              onChanged: (_) {
+                if (_errorDelMonto && _error != null) {
+                  setState(() => _error = null);
+                }
+              },
               decoration: InputDecoration(
-                labelText: 'Monto pagado *',
+                labelText: 'Monto pagado',
                 prefixText: 'S/ ',
-                border: const OutlineInputBorder(),
-                suffixIcon: TextButton(
-                  onPressed: () => setState(
-                    () => _monto.text = widget.saldo.toStringAsFixed(2),
+                errorText: _errorDelMonto ? _error : null,
+                errorMaxLines: 2,
+                suffixIcon: Padding(
+                  padding: const EdgeInsets.only(right: Espacio.xs),
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _monto.text = widget.saldo.toStringAsFixed(2);
+                      _error = null;
+                    }),
+                    child: const Text('Todo'),
                   ),
-                  child: const Text('Todo'),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Text('Medio de pago', style: textos.titleSmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: Espacio.xl),
+            Semantics(
+              header: true,
+              child: Text('¿Cómo pagó?', style: textos.titleSmall),
+            ),
+            const SizedBox(height: Espacio.sm),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: Espacio.sm,
+              runSpacing: Espacio.sm,
               children: [
                 for (final m in MedioPago.values)
                   ChoiceChip(
@@ -146,26 +182,32 @@ class _RegistrarPagoSheetState extends ConsumerState<RegistrarPagoSheet> {
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espacio.xl),
             TextField(
               controller: _nota,
               maxLength: 140,
-              decoration: const InputDecoration(
-                labelText: 'Nota (opcional)',
-                border: OutlineInputBorder(),
-              ),
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Nota (opcional)'),
             ),
-            if (_error != null) ...[
-              Text(
-                _error!,
+            if (!_errorDelMonto && _error != null) ...[
+              Aviso(
                 key: const Key('pago-error'),
-                style: const TextStyle(color: AppColors.error),
+                tono: Tono.peligro,
+                icono: Icons.error_outline,
+                texto: _error!,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Espacio.md),
             ],
-            FilledButton(
+            const SizedBox(height: Espacio.sm),
+            FilledButton.icon(
               onPressed: _guardando ? null : _guardar,
-              child: Text(_guardando ? 'Guardando…' : 'Registrar pago'),
+              icon: _guardando
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.payments_outlined),
+              label: Text(_guardando ? 'Guardando…' : 'Registrar pago'),
             ),
           ],
         ),

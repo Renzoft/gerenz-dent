@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formato/fechas.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// Estado de un control (docs/planificacion/03-modelo-de-datos.md §3).
 enum EstadoControl {
-  pendiente('PENDIENTE', 'Pendiente', AppColors.grisTexto),
-  recordado('RECORDADO', 'Recordado', AppColors.celeste),
-  confirmado('CONFIRMADO', 'Confirmó', AppColors.verdeOscuro),
-  asistio('ASISTIO', 'Asistió', AppColors.verde),
-  noAsistio('NO_ASISTIO', 'No vino', AppColors.error),
-  cancelado('CANCELADO', 'Cancelado', AppColors.grisTexto);
+  pendiente('PENDIENTE', 'Pendiente'),
+  recordado('RECORDADO', 'Recordado'),
+  confirmado('CONFIRMADO', 'Confirmó'),
+  asistio('ASISTIO', 'Asistió'),
+  noAsistio('NO_ASISTIO', 'No vino'),
+  cancelado('CANCELADO', 'Cancelado');
 
-  const EstadoControl(this.api, this.etiqueta, this.color);
+  const EstadoControl(this.api, this.etiqueta);
 
   final String api;
   final String etiqueta;
-  final Color color;
 
   bool get esAbierto =>
       this == pendiente || this == recordado || this == confirmado;

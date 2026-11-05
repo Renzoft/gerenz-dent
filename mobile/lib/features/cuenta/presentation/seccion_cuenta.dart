@@ -4,14 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/formato/fechas.dart';
 import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../application/cuenta_providers.dart';
 import '../data/cuenta_repository.dart';
 import '../domain/cuenta.dart';
 import 'registrar_pago_sheet.dart';
 
-/// Deuda del paciente en su ficha (HU-23, HU-24).
+/// Pagos del paciente en su ficha (HU-23, HU-24): deuda total y, por cada
+/// tratamiento, cuánto pagó, cuánto debe y "Registrar pago".
 class SeccionCuenta extends ConsumerWidget {
   const SeccionCuenta({super.key, required this.pacienteId});
 
@@ -20,41 +22,103 @@ class SeccionCuenta extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cuenta = ref.watch(cuentaPacienteProvider(pacienteId));
-    final textos = Theme.of(context).textTheme;
 
     return cuenta.when(
-      loading: () => const SizedBox.shrink(),
-      error: (e, _) => Text(
-        ApiError.desde(e).mensaje,
-        style: const TextStyle(color: AppColors.error),
+      skipLoadingOnRefresh: true,
+      loading: () => const TarjetaEsqueleto(),
+      error: (e, _) => _ErrorCuenta(
+        error: e,
+        onReintentar: () => ref.invalidate(cuentaPacienteProvider(pacienteId)),
       ),
       data: (c) {
-        if (c.planes.isEmpty) return const SizedBox.shrink();
+        if (c.planes.isEmpty) {
+          return const EstadoVacio(
+            icono: Icons.payments_outlined,
+            texto: 'Este paciente no tiene tratamientos con cobro.',
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Text('Deuda', style: textos.titleMedium),
-                const Spacer(),
-                Text(
-                  Moneda.formatear(c.deuda),
-                  key: const Key('deuda-total'),
-                  style: textos.titleLarge?.copyWith(
-                    color: c.deuda > 0
-                        ? AppColors.error
-                        : AppColors.verdeOscuro,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            for (final plan in c.planes)
+            _ResumenDeuda(deuda: c.deuda),
+            const EncabezadoSeccion('Por tratamiento'),
+            for (final plan in c.planes) ...[
               _TarjetaPlan(pacienteId: pacienteId, plan: plan),
+              const SizedBox(height: Espacio.md),
+            ],
           ],
         );
       },
+    );
+  }
+}
+
+class _ResumenDeuda extends StatelessWidget {
+  const _ResumenDeuda({required this.deuda});
+
+  final double deuda;
+
+  @override
+  Widget build(BuildContext context) {
+    final debe = deuda > 0;
+    final tono = debe ? Tono.aviso : Tono.exito;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Espacio.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Deuda total',
+              style: TextStyle(
+                fontSize: TipoTam.cuerpo,
+                color: Tokens.textoSecundario,
+              ),
+            ),
+            const SizedBox(height: Espacio.xs),
+            Text(
+              Moneda.formatear(deuda),
+              key: const Key('deuda-total'),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: debe ? Primitivos.ambar800 : Tokens.texto,
+              ),
+            ),
+            const SizedBox(height: Espacio.sm),
+            ChipEstado(
+              tono: tono,
+              icono: debe ? Icons.schedule : Icons.check_circle_outline,
+              texto: debe ? 'Tiene pagos pendientes' : 'Está al día',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorCuenta extends StatelessWidget {
+  const _ErrorCuenta({required this.error, required this.onReintentar});
+
+  final Object error;
+  final VoidCallback onReintentar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Aviso(
+          tono: Tono.peligro,
+          icono: Icons.cloud_off,
+          texto: ApiError.desde(error).mensaje,
+        ),
+        const SizedBox(height: Espacio.sm),
+        OutlinedButton.icon(
+          onPressed: onReintentar,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Reintentar'),
+        ),
+      ],
     );
   }
 }
@@ -67,55 +131,69 @@ class _TarjetaPlan extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final total = plan.totalCargos;
+    final avance = total <= 0 ? 1.0 : (plan.totalPagos / total).clamp(0.0, 1.0);
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
         onTap: () => _verDetalle(context, ref),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Espacio.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      plan.piezas == null
-                          ? plan.tratamientoNombre
-                          : '${plan.tratamientoNombre} · ${plan.piezas} pieza${plan.piezas == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right),
-                ],
+              Text(
+                plan.piezas == null
+                    ? plan.tratamientoNombre
+                    : '${plan.tratamientoNombre} · ${plan.piezas} pieza${plan.piezas == 1 ? '' : 's'}',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: Espacio.sm),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: plan.debe
+                    ? ChipEstado(
+                        tono: Tono.aviso,
+                        icono: Icons.schedule,
+                        texto: 'Debe ${Moneda.formatear(plan.saldo)}',
+                      )
+                    : const ChipEstado(
+                        tono: Tono.exito,
+                        icono: Icons.check_circle_outline,
+                        texto: 'Pagado por completo',
+                      ),
+              ),
+              const SizedBox(height: Espacio.md),
+              Semantics(
+                label: 'Pagado ${(avance * 100).round()} por ciento',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(Radios.pildora),
+                  child: LinearProgressIndicator(value: avance, minHeight: 8),
+                ),
+              ),
+              const SizedBox(height: Espacio.sm),
               Text(
                 'Total ${Moneda.formatear(plan.totalCargos)} · '
                 'Pagado ${Moneda.formatear(plan.totalPagos)}',
-                style: const TextStyle(color: AppColors.grisTexto),
-              ),
-              Text(
-                plan.debe
-                    ? 'Debe ${Moneda.formatear(plan.saldo)}'
-                    : 'Pagado por completo',
-                style: TextStyle(
-                  color: plan.debe ? AppColors.error : AppColors.verdeOscuro,
-                  fontWeight: FontWeight.w600,
+                style: const TextStyle(
+                  fontSize: TipoTam.cuerpo,
+                  color: Tokens.textoSecundario,
                 ),
               ),
+              const SizedBox(height: Espacio.md),
               if (plan.debe) ...[
-                const SizedBox(height: 8),
-                FilledButton.tonalIcon(
+                FilledButton.icon(
                   onPressed: () => _pagar(context, ref),
                   icon: const Icon(Icons.payments_outlined),
                   label: const Text('Registrar pago'),
                 ),
+                const SizedBox(height: Espacio.xs),
               ],
+              TextButton.icon(
+                onPressed: () => _verDetalle(context, ref),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Ver cobros y pagos'),
+              ),
             ],
           ),
         ),
@@ -180,20 +258,20 @@ class _DetallePlan extends ConsumerWidget {
                 ? 'Debe ${Moneda.formatear(plan.saldo)}'
                 : 'Pagado por completo',
             style: TextStyle(
-              color: plan.debe ? AppColors.error : AppColors.verdeOscuro,
+              color: plan.debe ? Primitivos.ambar800 : Primitivos.verde800,
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: TipoTam.cuerpo,
             ),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              Text('Cargos', style: textos.titleMedium),
+              Text('Cobros', style: textos.titleMedium),
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _agregarCargo(context, ref),
                 icon: const Icon(Icons.add),
-                label: const Text('Agregar'),
+                label: const Text('Agregar cobro'),
               ),
             ],
           ),
@@ -212,7 +290,7 @@ class _DetallePlan extends ConsumerWidget {
                         () => _ajustar(context, ref, c),
                       ),
                       _Accion(
-                        'Anular cargo',
+                        'Anular cobro',
                         () => _anularCargo(context, ref, c),
                       ),
                     ],
@@ -224,7 +302,7 @@ class _DetallePlan extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 'Aún no hay pagos.',
-                style: TextStyle(color: AppColors.grisTexto),
+                style: TextStyle(color: Tokens.textoSecundario),
               ),
             ),
           for (final p in plan.pagos)
@@ -291,7 +369,7 @@ class _DetallePlan extends ConsumerWidget {
   ) async {
     final motivo = await _pedirTexto(
       context,
-      titulo: 'Anular cargo',
+      titulo: 'Anular cobro',
       etiqueta: 'Motivo (ej.: no se cobró este mes)',
     );
     if (motivo == null || motivo.trim().isEmpty || !context.mounted) return;
@@ -299,7 +377,7 @@ class _DetallePlan extends ConsumerWidget {
       context,
       ref,
       () => ref.read(cuentaRepositoryProvider).anularCargo(c.id, motivo),
-      'Cargo anulado',
+      'Cobro anulado',
     );
   }
 
@@ -321,7 +399,7 @@ class _DetallePlan extends ConsumerWidget {
   Future<void> _agregarCargo(BuildContext context, WidgetRef ref) async {
     final descripcion = await _pedirTexto(
       context,
-      titulo: 'Agregar cargo',
+      titulo: 'Agregar cobro',
       etiqueta: 'Descripción (ej.: resina adicional)',
     );
     if (descripcion == null || descripcion.trim().isEmpty || !context.mounted) {
@@ -330,7 +408,7 @@ class _DetallePlan extends ConsumerWidget {
     final monto = Moneda.leer(
       await _pedirTexto(
         context,
-        titulo: 'Agregar cargo',
+        titulo: 'Agregar cobro',
         etiqueta: 'Monto',
         numerico: true,
       ),
@@ -342,7 +420,7 @@ class _DetallePlan extends ConsumerWidget {
       () => ref
           .read(cuentaRepositoryProvider)
           .agregarCargo(planId, descripcion.trim(), monto),
-      'Cargo agregado',
+      'Cobro agregado',
     );
   }
 }
@@ -377,7 +455,7 @@ class _FilaMovimiento extends StatelessWidget {
   Widget build(BuildContext context) {
     final estilo = TextStyle(
       decoration: anulado ? TextDecoration.lineThrough : null,
-      color: anulado ? AppColors.grisTexto : null,
+      color: anulado ? Tokens.textoSecundario : null,
     );
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -395,8 +473,8 @@ class _FilaMovimiento extends StatelessWidget {
             style: estilo.copyWith(
               fontWeight: FontWeight.w600,
               color: anulado
-                  ? AppColors.grisTexto
-                  : (esPago ? AppColors.verdeOscuro : null),
+                  ? Tokens.textoSecundario
+                  : (esPago ? Primitivos.verde800 : null),
             ),
           ),
           if (acciones.isNotEmpty)

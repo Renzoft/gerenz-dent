@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/formato/fechas.dart';
 import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../../cuenta/data/cuenta_repository.dart';
 import '../../cuenta/domain/cuenta.dart';
@@ -13,17 +14,23 @@ import '../application/controles_providers.dart';
 import '../data/controles_repository.dart';
 import '../domain/control.dart';
 import 'agendar_control_sheet.dart';
+import 'estado_visual.dart';
 
-/// Control abierto con sus acciones: Asistió · No vino · Reprogramar · más.
+/// Control abierto: una acción principal (Asistió) y "Otras opciones".
 class TarjetaControl extends ConsumerStatefulWidget {
   const TarjetaControl({
     super.key,
     required this.control,
     required this.pacienteNombre,
+    this.destacada = true,
   });
 
   final Control control;
   final String pacienteNombre;
+
+  /// Solo el control más cercano lleva "Asistió" como acción principal; los
+  /// siguientes, en versión secundaria (una acción principal por pantalla).
+  final bool destacada;
 
   @override
   ConsumerState<TarjetaControl> createState() => _TarjetaControlState();
@@ -43,6 +50,8 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
             'El control de ${_c.tratamientoNombre} del ${Fechas.corta(_c.fecha)} '
             'quedará cancelado y no se enviará recordatorio.',
         accion: 'Cancelar control',
+        cancelar: 'No, volver',
+        peligrosa: true,
       );
       if (!ok) return;
     }
@@ -151,85 +160,144 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
     }
   }
 
+  /// Acciones menos frecuentes, con nombre y explicación (antes: menú ⋮).
+  Future<void> _otrasOpciones() async {
+    final eleccion = await mostrarOpciones<_OpcionControl>(
+      context,
+      titulo: _c.tratamientoNombre,
+      opciones: [
+        const Opcion(
+          valor: _OpcionControl.noVino,
+          icono: Icons.person_off_outlined,
+          titulo: 'No vino',
+          detalle: 'El paciente no asistió a este control',
+        ),
+        const Opcion(
+          valor: _OpcionControl.cambiarFecha,
+          icono: Icons.event_repeat,
+          titulo: 'Cambiar fecha',
+          detalle: 'Mover el control a otro día',
+        ),
+        if (_c.estado != EstadoControl.confirmado)
+          const Opcion(
+            valor: _OpcionControl.confirmo,
+            icono: Icons.thumb_up_alt_outlined,
+            titulo: 'El paciente confirmó',
+            detalle: 'Respondió que sí vendrá',
+          ),
+        const Opcion(
+          valor: _OpcionControl.cancelar,
+          icono: Icons.cancel_outlined,
+          titulo: 'Cancelar control',
+          detalle: 'Ya no se hará y no se le enviará recordatorio',
+          peligrosa: true,
+        ),
+      ],
+    );
+    if (!mounted || eleccion == null) return;
+    switch (eleccion) {
+      case _OpcionControl.noVino:
+        await _cambiar(EstadoControl.noAsistio);
+      case _OpcionControl.cambiarFecha:
+        await _reprogramar();
+      case _OpcionControl.confirmo:
+        await _cambiar(EstadoControl.confirmado);
+      case _OpcionControl.cancelar:
+        await _cambiar(EstadoControl.cancelado);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textos = Theme.of(context).textTheme;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Espacio.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Nombre, estado y fecha en filas propias: con letra grande nada
+            // se corta a mitad de palabra.
+            Text(_c.tratamientoNombre, style: textos.titleMedium),
+            const SizedBox(height: Espacio.sm),
+            Align(alignment: Alignment.centerLeft, child: chipDeControl(_c)),
+            const SizedBox(height: Espacio.md),
             Row(
               children: [
-                Expanded(
-                  child: Text(_c.tratamientoNombre, style: textos.titleMedium),
+                const ExcludeSemantics(
+                  child: Icon(
+                    Icons.event_outlined,
+                    size: 22,
+                    color: Tokens.textoSecundario,
+                  ),
                 ),
-                _ChipEstado(control: _c),
-                PopupMenuButton<EstadoControl>(
-                  tooltip: 'Más acciones',
-                  enabled: !_procesando,
-                  onSelected: _cambiar,
-                  itemBuilder: (_) => [
-                    if (_c.estado != EstadoControl.confirmado)
-                      const PopupMenuItem(
-                        value: EstadoControl.confirmado,
-                        child: Text('El paciente confirmó'),
-                      ),
-                    const PopupMenuItem(
-                      value: EstadoControl.cancelado,
-                      child: Text('Cancelar control'),
+                const SizedBox(width: Espacio.sm),
+                Expanded(
+                  child: Text(
+                    sinCortes(_c.fechaTexto()),
+                    style: const TextStyle(
+                      fontSize: TipoTam.subtitulo,
+                      fontWeight: FontWeight.w600,
+                      color: Tokens.texto,
                     ),
-                  ],
+                  ),
                 ),
               ],
-            ),
-            Text(
-              _c.fechaTexto(),
-              style: textos.titleLarge?.copyWith(
-                color: _c.vencido ? AppColors.error : AppColors.verdeOscuro,
-              ),
             ),
             if (_c.vencido)
-              Text(
-                'Vencido hace ${_c.diasAtraso} día${_c.diasAtraso == 1 ? '' : 's'}',
-                style: const TextStyle(color: AppColors.error),
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 22 + Espacio.sm,
+                  top: Espacio.xs,
+                ),
+                child: Text(
+                  'Vencido hace ${_c.diasAtraso} día${_c.diasAtraso == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    color: Primitivos.ambar700,
+                    fontSize: TipoTam.cuerpo,
+                  ),
+                ),
               ),
             if (_c.nota != null) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: Espacio.sm),
               Text(
                 _c.nota!,
-                style: const TextStyle(color: AppColors.grisTexto),
+                style: textos.bodyMedium?.copyWith(
+                  color: Tokens.textoSecundario,
+                ),
               ),
             ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _procesando
-                        ? null
-                        : () => _cambiar(EstadoControl.asistio),
-                    child: const Text('Asistió'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _procesando
-                        ? null
-                        : () => _cambiar(EstadoControl.noAsistio),
-                    child: const Text('No vino'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _procesando ? null : _reprogramar,
-              icon: const Icon(Icons.event_repeat),
-              label: const Text('Reprogramar'),
-            ),
+            const SizedBox(height: Espacio.lg),
+            // Una sola acción principal; el resto, en "Otras opciones".
+            if (widget.destacada)
+              FilledButton.icon(
+                onPressed: _procesando
+                    ? null
+                    : () => _cambiar(EstadoControl.asistio),
+                icon: const Icon(Icons.check),
+                label: const Text('Asistió'),
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: _procesando
+                    ? null
+                    : () => _cambiar(EstadoControl.asistio),
+                icon: const Icon(Icons.check),
+                label: const Text('Asistió'),
+              ),
+            const SizedBox(height: Espacio.sm),
+            if (widget.destacada)
+              OutlinedButton.icon(
+                onPressed: _procesando ? null : _otrasOpciones,
+                icon: const Icon(Icons.more_horiz),
+                label: const Text('Otras opciones'),
+              )
+            else
+              TextButton.icon(
+                onPressed: _procesando ? null : _otrasOpciones,
+                icon: const Icon(Icons.more_horiz),
+                label: const Text('Otras opciones'),
+              ),
           ],
         ),
       ),
@@ -237,29 +305,9 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
   }
 }
 
-class _ChipEstado extends StatelessWidget {
-  const _ChipEstado({required this.control});
+enum _OpcionControl { noVino, cambiarFecha, confirmo, cancelar }
 
-  final Control control;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = control.vencido ? AppColors.error : control.estado.color;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        control.vencido ? 'Vencido' : control.estado.etiqueta,
-        style: TextStyle(color: color, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-/// Fila del historial (controles cerrados).
+/// Fila del historial (controles cerrados): tratamiento, día y estado.
 class FilaHistorial extends StatelessWidget {
   const FilaHistorial({super.key, required this.control});
 
@@ -267,19 +315,46 @@ class FilaHistorial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(Icons.circle, size: 12, color: control.estado.color),
-      title: Text(control.tratamientoNombre),
-      // Día real en que se cerró; si no se conoce, la fecha planificada.
-      subtitle: Text(Fechas.corta(control.cerradoEn ?? control.fecha)),
-      trailing: Text(
-        control.estado.etiqueta,
-        style: TextStyle(
-          color: control.estado.color,
-          fontWeight: FontWeight.w600,
+    final datos = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          control.tratamientoNombre,
+          style: Theme.of(context).textTheme.titleSmall,
         ),
+        const SizedBox(height: 2),
+        // Día real en que se cerró; si no se conoce, la planificada.
+        Text(
+          Fechas.corta(control.cerradoEn ?? control.fecha),
+          style: const TextStyle(
+            fontSize: TipoTam.cuerpo,
+            color: Tokens.textoSecundario,
+          ),
+        ),
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Espacio.lg,
+        vertical: Espacio.md,
       ),
+      // Con letra muy grande el estado va debajo, para no aplastar el nombre.
+      child: letraGrande(context)
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                datos,
+                const SizedBox(height: Espacio.sm),
+                chipDeControl(control),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: datos),
+                const SizedBox(width: Espacio.sm),
+                chipDeControl(control),
+              ],
+            ),
     );
   }
 }
