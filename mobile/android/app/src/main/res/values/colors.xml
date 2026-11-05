@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#3BB5E8</color>
+    <!-- Celeste profundo del ícono: fondo mientras abre la app. -->
+    <color name="fondo_carga">#0A5676</color>
 </resources>

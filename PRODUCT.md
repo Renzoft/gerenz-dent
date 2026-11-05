@@ -49,10 +49,10 @@ software de clínicas: reemplaza la memoria y el cuaderno del doctor.
 
 ## Brand Commitments
 
-- Nombre: GERENZ DENT. Logo: diente blanco con check verde sobre círculo celeste (`docs/branding/`).
+- Nombre: GERENZ DENT (dos palabras). Logo "Cristal" (2026-11-05): muela de vidrio con destello sobre luces celeste y verde en fondo #0A5676; nombre en Sora ExtraBold (`docs/branding/`).
 - Paleta obligatoria de 3 colores: celeste #3BB5E8 (primario/marca), blanco #FFFFFF (fondos),
   verde #22B573 (acento/acción principal). Solo se derivan tintes, sombras y neutros de ellos.
-- Fuente del logo: Montserrat.
+- Fuente del logo: Sora (exportado como imagen). Títulos de la app: Montserrat.
 - Los mensajes a pacientes van en "usted" y firmados "Dr. Marco Munayco Chacón".
 - Tono: profesional y de confianza, limpio, cercano; salud y orden, sin verse frío ni genérico.
 
