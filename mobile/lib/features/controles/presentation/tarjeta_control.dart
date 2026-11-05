@@ -50,6 +50,8 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
             'El control de ${_c.tratamientoNombre} del ${Fechas.corta(_c.fecha)} '
             'quedará cancelado y no se enviará recordatorio.',
         accion: 'Cancelar control',
+        cancelar: 'No, volver',
+        peligrosa: true,
       );
       if (!ok) return;
     }

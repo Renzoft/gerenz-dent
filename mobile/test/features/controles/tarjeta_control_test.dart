@@ -149,7 +149,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cancelar control'), findsWidgets);
-    await tester.tap(find.text('Cancelar'));
+    await tester.tap(find.text('No, volver'));
     await tester.pumpAndSettle();
     verifyNever(() => controles.cambiarEstado(any(), any()));
   });

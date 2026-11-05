@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/formato/moneda.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
@@ -62,40 +61,28 @@ class _PacienteDetallePageState extends ConsumerState<PacienteDetallePage> {
   Widget build(BuildContext context) {
     final paciente = ref.watch(pacienteProvider(pacienteId));
 
-    // Piloto del sistema v2: solo esta pantalla (y lo que abre) usa el tema
-    // nuevo hasta la Fase 3.
-    return Theme(
-      data: AppTheme.nuevo,
-      child: Builder(
-        builder: (context) {
-          if (paciente.value case final p?) {
-            _abrirAgendarSiCorresponde(context, p);
-          }
-          return Scaffold(
-            backgroundColor: Tokens.fondo,
-            appBar: AppBar(
-              backgroundColor: Tokens.superficieMarca,
-              title: const Text('Ficha'),
-              actions: [
-                if (paciente.value case final p?)
-                  IconButton(
-                    tooltip: 'Editar datos',
-                    icon: const Icon(Icons.edit_outlined),
-                    onPressed: () => context.push(Rutas.pacienteEditar(p.id)),
-                  ),
-              ],
+    if (paciente.value case final p?) _abrirAgendarSiCorresponde(context, p);
+    return Scaffold(
+      backgroundColor: Tokens.fondo,
+      appBar: AppBar(
+        backgroundColor: Tokens.superficieMarca,
+        title: const Text('Ficha'),
+        actions: [
+          if (paciente.value case final p?)
+            IconButton(
+              tooltip: 'Editar datos',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => context.push(Rutas.pacienteEditar(p.id)),
             ),
-            body: paciente.when(
-              loading: () => const _FichaCargando(),
-              error: (e, _) => VistaError(
-                error: e,
-                onReintentar: () =>
-                    ref.invalidate(pacienteProvider(pacienteId)),
-              ),
-              data: (p) => _Ficha(paciente: p),
-            ),
-          );
-        },
+        ],
+      ),
+      body: paciente.when(
+        loading: () => const _FichaCargando(),
+        error: (e, _) => VistaError(
+          error: e,
+          onReintentar: () => ref.invalidate(pacienteProvider(pacienteId)),
+        ),
+        data: (p) => _Ficha(paciente: p),
       ),
     );
   }

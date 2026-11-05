@@ -1,81 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
 import 'tokens.dart';
 
-/// Temas de la app.
-///
-/// - [claro]: el tema de la v1.1 (se mantiene mientras dura el rediseño).
-/// - [nuevo]: el sistema de diseño v2 (tokens.dart). En la Fase 3 reemplaza a
-///   [claro] en toda la app; por ahora solo lo usa la pantalla piloto.
+/// Tema de la app: sistema de diseño v2 (tokens.dart,
+/// docs/rediseno/02-sistema-de-diseno.md). Solo claro (sin modo oscuro).
 abstract final class AppTheme {
-  static final ThemeData claro = _construirClaro();
-  static final ThemeData nuevo = _construirNuevo();
-
-  // -------------------------------------------------------------------------
-  // v1.1 (sin cambios)
-  // -------------------------------------------------------------------------
-
-  static ThemeData _construirClaro() {
-    final esquema =
-        ColorScheme.fromSeed(
-          seedColor: AppColors.celeste,
-          brightness: Brightness.light,
-        ).copyWith(
-          primary: AppColors.verdeBoton,
-          onPrimary: AppColors.blanco,
-          secondary: AppColors.celeste,
-          onSecondary: AppColors.texto,
-          surface: AppColors.blanco,
-          onSurface: AppColors.texto,
-          error: AppColors.error,
-        );
-
-    final base = ThemeData(
-      useMaterial3: true,
-      colorScheme: esquema,
-      scaffoldBackgroundColor: AppColors.blanco,
-    );
-
-    const tamanoBoton = Size.fromHeight(52);
-    const textoBoton = TextStyle(fontSize: 18, fontWeight: FontWeight.w600);
-
-    return base.copyWith(
-      textTheme: base.textTheme.copyWith(
-        bodyLarge: base.textTheme.bodyLarge?.copyWith(fontSize: 18),
-        bodyMedium: base.textTheme.bodyMedium?.copyWith(fontSize: 16),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.blanco,
-        foregroundColor: AppColors.texto,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: tamanoBoton,
-          textStyle: textoBoton,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: tamanoBoton,
-          textStyle: textoBoton,
-        ),
-      ),
-      cardTheme: const CardThemeData(
-        color: AppColors.celesteFondo,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-      ),
-    );
-  }
+  static final ThemeData claro = _construir();
 
   // -------------------------------------------------------------------------
   // v2 (rediseño)
   // -------------------------------------------------------------------------
 
-  static ThemeData _construirNuevo() {
+  static ThemeData _construir() {
     const esquema = ColorScheme(
       brightness: Brightness.light,
       primary: Tokens.accion,
@@ -331,6 +267,75 @@ abstract final class AppTheme {
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: Tokens.avance,
         linearTrackColor: Primitivos.neutro100,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Tokens.superficie,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: Tokens.marcaSuave,
+        elevation: 0,
+        height: 72,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (estados) => IconThemeData(
+            color: estados.contains(WidgetState.selected)
+                ? Primitivos.celeste800
+                : Tokens.textoSecundario,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (estados) => TextStyle(
+            fontSize: TipoTam.etiqueta,
+            fontWeight: estados.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+            color: estados.contains(WidgetState.selected)
+                ? Primitivos.celeste800
+                : Tokens.textoSecundario,
+          ),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: Tokens.accion,
+        foregroundColor: Tokens.textoSobreAccion,
+        elevation: 2,
+        extendedTextStyle: const TextStyle(
+          fontSize: TipoTam.subtitulo,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radios.tarjeta),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        labelStyle: const TextStyle(
+          fontSize: TipoTam.cuerpo,
+          fontWeight: FontWeight.w600,
+          color: Tokens.texto,
+        ),
+        side: const BorderSide(color: Tokens.bordeControl),
+        selectedColor: Tokens.marcaSuave,
+        checkmarkColor: Primitivos.celeste800,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radios.control),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Espacio.sm,
+          vertical: Espacio.sm,
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: SegmentedButton.styleFrom(
+          selectedBackgroundColor: Tokens.marcaSuave,
+          selectedForegroundColor: Primitivos.celeste900,
+          side: const BorderSide(color: Tokens.bordeControl),
+          minimumSize: const Size(48, 48),
+          textStyle: const TextStyle(
+            fontSize: TipoTam.cuerpo,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      timePickerTheme: const TimePickerThemeData(
+        backgroundColor: Tokens.superficie,
       ),
       popupMenuTheme: PopupMenuThemeData(
         color: Tokens.superficie,
