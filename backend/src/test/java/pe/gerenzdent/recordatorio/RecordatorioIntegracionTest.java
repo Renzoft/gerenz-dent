@@ -229,6 +229,43 @@ class RecordatorioIntegracionTest extends PruebaIntegracion {
     get("/api/v1/recordatorios/seguimientos").andExpect(jsonPath("$", hasSize(0)));
   }
 
+  private ResultActions ponerFecha(String controlId, LocalDate fecha) throws Exception {
+    return mockMvc.perform(
+        patch("/api/v1/controles/" + controlId + "/fecha")
+            .header("Authorization", autorizacion)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json("fecha", fecha.toString())));
+  }
+
+  @Test
+  void ponerFechaAUnNoVinoAgendaElSiguienteYLoSacaDeNoVinieron() throws Exception {
+    String juan = crearPaciente("Juan", "987654321", true);
+    String control = agendar(juan, hoy, null);
+    noVino(control, null).andExpect(status().isOk());
+    registrar(control, "SEGUIMIENTO").andExpect(status().isCreated());
+    int planes = contar("plan_tratamiento");
+    int cargos = contar("cargo");
+
+    String r =
+        ponerFecha(control, hoy.plusDays(4))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.estado").value("PENDIENTE"))
+            .andExpect(jsonPath("$.fecha").value(hoy.plusDays(4).toString()))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    // Es un control nuevo del mismo plan; el "no vino" sigue en el historial.
+    assertThat((String) JsonPath.read(r, "$.id")).isNotEqualTo(control);
+    get("/api/v1/controles/" + control).andExpect(jsonPath("$.estado").value("NO_ASISTIO"));
+    assertThat(contar("plan_tratamiento")).isEqualTo(planes);
+    assertThat(contar("cargo")).isEqualTo(cargos);
+    get("/api/v1/recordatorios/seguimientos").andExpect(jsonPath("$", hasSize(0)));
+
+    // Una segunda vez ya no: tiene un control pendiente.
+    ponerFecha(control, hoy.plusDays(6)).andExpect(status().isConflict());
+  }
+
   @Test
   void noSePuedeMarcarNoVinoDosVeces() throws Exception {
     String juan = crearPaciente("Juan", "987654321", true);

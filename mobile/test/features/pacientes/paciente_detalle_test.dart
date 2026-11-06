@@ -22,7 +22,10 @@ void main() {
   late CuentaRepositoryFalso cuenta;
   late TratamientosRepositoryFalso tratamientos;
 
-  setUpAll(() => initializeDateFormatting('es_PE'));
+  setUpAll(() async {
+    await initializeDateFormatting('es_PE');
+    registerFallbackValue(DateTime(2026));
+  });
 
   setUp(() {
     pacientes = PacientesRepositoryFalso();
@@ -127,4 +130,52 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Deuda total'), findsOneWidget);
   });
+
+  testWidgets(
+    'un "No vino" sin fecha muestra "Poner nueva fecha" y la guarda',
+    (tester) async {
+      final hoy = Fechas.hoy();
+      when(() => controles.historial('p-1')).thenAnswer(
+        (_) async => [
+          controlPrueba(
+            id: 'c-nv',
+            planId: 'pl-1',
+            fecha: hoy.subtract(const Duration(days: 2)),
+            estado: EstadoControl.noAsistio,
+          ),
+        ],
+      );
+      when(() => controles.reprogramar(any(), any(), any())).thenAnswer(
+        (_) async => controlPrueba(
+          id: 'c-nuevo',
+          planId: 'pl-1',
+          fecha: hoy.add(const Duration(days: 7)),
+        ),
+      );
+      await montar(tester);
+
+      expect(find.text('Falta nueva fecha'), findsWidgets);
+      expect(find.text('No tiene un control agendado.'), findsNothing);
+      final boton = find.widgetWithText(FilledButton, 'Poner nueva fecha');
+      expect(boton, findsOneWidget);
+
+      await tester.ensureVisible(boton);
+      await tester.tap(boton);
+      await tester.pumpAndSettle();
+      expect(find.text('¿Cuándo vuelve?'), findsOneWidget);
+      // Aquí no se ofrece "Todavía no sabe": ya está en seguimiento.
+      expect(find.text('Todavía no sabe'), findsNothing);
+      await tester.tap(find.text('En 1 semana'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => controles.reprogramar(
+          'c-nv',
+          hoy.add(const Duration(days: 7)),
+          null,
+        ),
+      ).called(1);
+      expect(find.textContaining('Próximo control:'), findsOneWidget);
+    },
+  );
 }

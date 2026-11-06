@@ -34,6 +34,7 @@ void main() {
   setUpAll(() async {
     await initializeDateFormatting('es_PE');
     registerFallbackValue(TipoRecordatorio.previo);
+    registerFallbackValue(DateTime(2026));
   });
 
   setUp(() {
@@ -340,6 +341,52 @@ void main() {
     expect(find.text('Brackets (ortodoncia) · no vino hoy'), findsOneWidget);
     expect(find.text('Brackets (ortodoncia) · hace 3 días'), findsOneWidget);
   });
+
+  testWidgets(
+    'en "No vinieron", tras escribirle se le pone la fecha ahí mismo',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final hoy = Fechas.hoy();
+      when(() => recordatorios.seguimientos()).thenAnswer(
+        (_) async => [
+          mensajePrueba(
+            controlId: 'c-a',
+            paciente: 'Ana Ríos',
+            tipo: TipoRecordatorio.seguimiento,
+            enviado: true,
+            estado: EstadoControl.noAsistio,
+            diasAtraso: 2,
+          ),
+        ],
+      );
+      when(() => controles.reprogramar(any(), any(), any())).thenAnswer(
+        (_) async =>
+            controlPrueba(id: 'c-b', fecha: hoy.add(const Duration(days: 1))),
+      );
+      await montar(tester);
+
+      expect(
+        find.text(
+          'Brackets (ortodoncia) · no vino hace 2 días · mensaje enviado',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Poner fecha'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Mañana'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => controles.reprogramar(
+          'c-a',
+          hoy.add(const Duration(days: 1)),
+          null,
+        ),
+      ).called(1);
+    },
+  );
 
   testWidgets('"No vinieron" ofrece escribirles', (tester) async {
     when(() => recordatorios.seguimientos()).thenAnswer(

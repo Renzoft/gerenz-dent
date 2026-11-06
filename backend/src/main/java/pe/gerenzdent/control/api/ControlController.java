@@ -122,7 +122,10 @@ public class ControlController {
         resultado.siguiente().map(c -> ControlResponse.de(c, hoy)).orElse(null));
   }
 
-  /** Cambia la fecha y vuelve a pendiente (HU-14). */
+  /**
+   * Cambia la fecha y vuelve a pendiente (HU-14). En un control que quedó como "no asistió", agenda
+   * el siguiente del mismo tratamiento en esa fecha (el "no vino" queda en el historial).
+   */
   @PatchMapping("/controles/{id}/fecha")
   public ControlResponse reprogramar(
       @AuthenticationPrincipal Jwt jwt,

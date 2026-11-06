@@ -13,6 +13,7 @@ import '../../../core/widgets/estados.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../controles/application/controles_providers.dart';
 import '../../controles/domain/control.dart';
+import '../../controles/presentation/cuando_vuelve.dart';
 import '../../recordatorios/application/recordatorios_providers.dart';
 import '../../recordatorios/domain/mensaje_recordatorio.dart';
 import '../data/salud_repository.dart';
@@ -791,16 +792,32 @@ class _SeccionNoVinieron extends ConsumerWidget {
                     _FilaPaciente(
                       nombre: m.pacienteNombre,
                       // "No vino" (marcado) o vencido (nadie lo marcó).
-                      detalle: m.estado == EstadoControl.noAsistio
-                          ? '${m.tratamiento} · no vino ${_dias(m.diasAtraso)}'
-                          : '${m.tratamiento} · ${_dias(m.diasAtraso)}',
+                      detalle: [
+                        m.tratamiento,
+                        m.estado == EstadoControl.noAsistio
+                            ? 'no vino ${_dias(m.diasAtraso)}'
+                            : _dias(m.diasAtraso),
+                        if (m.enviado) 'mensaje enviado',
+                      ].join(' · '),
                       pacienteId: m.pacienteId,
                       accion: Padding(
                         padding: const EdgeInsets.only(right: Espacio.sm),
-                        child: !m.sePuedeEnviar
-                            ? _sinWhatsapp
-                            : m.enviado
-                            ? _enviado
+                        // Ya se le escribió (o no tiene WhatsApp): cuando
+                        // responda, se le pone la fecha desde aquí mismo.
+                        child: m.enviado || !m.sePuedeEnviar
+                            ? TextButton.icon(
+                                onPressed: () => ponerNuevaFecha(
+                                  context,
+                                  ref,
+                                  controlId: m.controlId,
+                                  pacienteId: m.pacienteId,
+                                ),
+                                icon: const Icon(
+                                  Icons.event_available,
+                                  size: 20,
+                                ),
+                                label: const Text('Poner fecha'),
+                              )
                             : TextButton.icon(
                                 onPressed: () => _enviarUno(context, ref, m),
                                 icon: const Icon(Icons.chat_outlined, size: 20),
