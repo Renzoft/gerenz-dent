@@ -113,31 +113,80 @@ void main() {
     expect(find.textContaining('Sugerida por el tratamiento'), findsOneWidget);
   });
 
-  testWidgets('"No vino" está en "Otras opciones" y cambia el estado', (
+  testWidgets(
+    '"No vino" pregunta cuándo vuelve y agenda el siguiente control',
+    (tester) async {
+      final hoy = Fechas.hoy();
+      final enUnaSemana = hoy.add(const Duration(days: 7));
+      when(
+        () => controles.noVino('c-1', fecha: any(named: 'fecha')),
+      ).thenAnswer(
+        (_) async => ResultadoNoVino(
+          control: controlPrueba(estado: EstadoControl.noAsistio),
+          siguiente: controlPrueba(id: 'c-2', fecha: enUnaSemana),
+        ),
+      );
+      await montar(tester, controlPrueba());
+
+      // La tarjeta muestra una sola acción principal; el resto va en la hoja.
+      expect(find.text('No vino'), findsNothing);
+      await tester.tap(find.text('Otras opciones'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cambiar fecha'), findsOneWidget);
+      expect(find.text('El paciente confirmó'), findsOneWidget);
+      await tester.tap(find.text('No vino'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('¿Cuándo vuelve?'), findsOneWidget);
+      expect(find.text('Mañana'), findsOneWidget);
+      expect(find.text('Todavía no sabe'), findsOneWidget);
+      await tester.tap(find.text('En 1 semana'));
+      await tester.pumpAndSettle();
+
+      verify(() => controles.noVino('c-1', fecha: enUnaSemana)).called(1);
+      verifyNever(() => controles.cambiarEstado(any(), any()));
+      expect(find.textContaining('No vino. Próximo control:'), findsOneWidget);
+    },
+  );
+
+  testWidgets('"Todavía no sabe" lo deja en "No vinieron" sin fecha', (
     tester,
   ) async {
-    when(
-      () => controles.cambiarEstado('c-1', EstadoControl.noAsistio),
-    ).thenAnswer(
-      (_) async => CambioDeEstado(
+    when(() => controles.noVino('c-1', fecha: any(named: 'fecha'))).thenAnswer(
+      (_) async => ResultadoNoVino(
         control: controlPrueba(estado: EstadoControl.noAsistio),
       ),
     );
     await montar(tester, controlPrueba());
 
-    // La tarjeta muestra una sola acción principal; el resto va en la hoja.
-    expect(find.text('No vino'), findsNothing);
     await tester.tap(find.text('Otras opciones'));
     await tester.pumpAndSettle();
-    expect(find.text('Cambiar fecha'), findsOneWidget);
-    expect(find.text('El paciente confirmó'), findsOneWidget);
     await tester.tap(find.text('No vino'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Todavía no sabe'));
+    await tester.tap(find.text('Todavía no sabe'));
+    await tester.pumpAndSettle();
 
-    verify(
-      () => controles.cambiarEstado('c-1', EstadoControl.noAsistio),
-    ).called(1);
-    expect(find.text('Control marcado: No vino'), findsOneWidget);
+    verify(() => controles.noVino('c-1', fecha: null)).called(1);
+    expect(
+      find.text('No vino. Queda en "No vinieron" para escribirle.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('si cierra "¿Cuándo vuelve?" sin elegir, no cambia nada', (
+    tester,
+  ) async {
+    await montar(tester, controlPrueba());
+
+    await tester.tap(find.text('Otras opciones'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('No vino'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10)); // fuera de la hoja
+    await tester.pumpAndSettle();
+
+    verifyNever(() => controles.noVino(any(), fecha: any(named: 'fecha')));
   });
 
   testWidgets('cancelar pide confirmación', (tester) async {

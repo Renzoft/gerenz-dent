@@ -10,6 +10,7 @@ import '../../../core/widgets/estados.dart';
 import '../../cuenta/data/cuenta_repository.dart';
 import '../../cuenta/domain/cuenta.dart';
 import '../../cuenta/presentation/registrar_pago_sheet.dart';
+import '../../recordatorios/application/recordatorios_providers.dart';
 import '../application/controles_providers.dart';
 import '../data/controles_repository.dart';
 import '../domain/control.dart';
@@ -135,6 +136,73 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
     if (ok && mounted) mostrarMensaje(context, 'Pago registrado');
   }
 
+  /// "No vino": siempre pregunta cuándo vuelve, para no perder al paciente.
+  /// Con fecha se agenda el siguiente control; con "Todavía no sabe" queda
+  /// en "No vinieron" (Inicio) para escribirle.
+  Future<void> _noVino() async {
+    final hoy = Fechas.hoy();
+    String dia(DateTime f) => Fechas.corta(f);
+    final eleccion = await mostrarOpciones<_CuandoVuelve>(
+      context,
+      titulo: '¿Cuándo vuelve?',
+      opciones: [
+        for (final c in _CuandoVuelve.conFecha)
+          Opcion(
+            valor: c,
+            icono: Icons.event_available_outlined,
+            titulo: c.titulo,
+            detalle: dia(c.fecha(hoy)!),
+          ),
+        const Opcion(
+          valor: _CuandoVuelve.otraFecha,
+          icono: Icons.calendar_month_outlined,
+          titulo: 'Otra fecha',
+          detalle: 'Elegir en el calendario',
+        ),
+        const Opcion(
+          valor: _CuandoVuelve.noSabe,
+          icono: Icons.help_outline,
+          titulo: 'Todavía no sabe',
+          detalle: 'Queda en "No vinieron" para escribirle',
+        ),
+      ],
+    );
+    if (eleccion == null || !mounted) return;
+
+    DateTime? fecha = eleccion.fecha(hoy);
+    if (eleccion == _CuandoVuelve.otraFecha) {
+      fecha = await showDatePicker(
+        context: context,
+        initialDate: hoy.add(const Duration(days: 7)),
+        firstDate: hoy,
+        lastDate: hoy.add(const Duration(days: 730)),
+        helpText: '¿Cuándo vuelve?',
+      );
+      if (fecha == null || !mounted) return;
+    }
+
+    setState(() => _procesando = true);
+    try {
+      final r = await ref
+          .read(controlesRepositoryProvider)
+          .noVino(_c.id, fecha: fecha);
+      if (!mounted) return;
+      final siguiente = r.siguiente;
+      mostrarMensaje(
+        context,
+        siguiente == null
+            ? 'No vino. Queda en "No vinieron" para escribirle.'
+            : 'No vino. Próximo control: ${sinCortes(siguiente.fechaTexto())}',
+      );
+      refrescarRecordatorios(ref);
+      refrescarControles(ref, _c.pacienteId);
+    } on ApiError catch (e) {
+      if (mounted) mostrarMensaje(context, e.mensaje);
+    } finally {
+      if (mounted) setState(() => _procesando = false);
+    }
+  }
+
   Future<void> _reprogramar() async {
     final hoy = Fechas.hoy();
     final fecha = await showDatePicker(
@@ -170,7 +238,7 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
           valor: _OpcionControl.noVino,
           icono: Icons.person_off_outlined,
           titulo: 'No vino',
-          detalle: 'El paciente no asistió a este control',
+          detalle: 'Anotarlo y elegir cuándo vuelve',
         ),
         const Opcion(
           valor: _OpcionControl.cambiarFecha,
@@ -197,7 +265,7 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
     if (!mounted || eleccion == null) return;
     switch (eleccion) {
       case _OpcionControl.noVino:
-        await _cambiar(EstadoControl.noAsistio);
+        await _noVino();
       case _OpcionControl.cambiarFecha:
         await _reprogramar();
       case _OpcionControl.confirmo:
@@ -306,6 +374,25 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
 }
 
 enum _OpcionControl { noVino, cambiarFecha, confirmo, cancelar }
+
+/// Respuestas a "¿Cuándo vuelve?" después de "No vino".
+enum _CuandoVuelve {
+  manana('Mañana', 1),
+  enUnaSemana('En 1 semana', 7),
+  enQuinceDias('En 15 días', 15),
+  otraFecha('Otra fecha', null),
+  noSabe('Todavía no sabe', null);
+
+  const _CuandoVuelve(this.titulo, this.dias);
+
+  final String titulo;
+  final int? dias;
+
+  static const conFecha = [manana, enUnaSemana, enQuinceDias];
+
+  DateTime? fecha(DateTime hoy) =>
+      dias == null ? null : hoy.add(Duration(days: dias!));
+}
 
 /// Fila del historial (controles cerrados): tratamiento, día y estado.
 class FilaHistorial extends StatelessWidget {

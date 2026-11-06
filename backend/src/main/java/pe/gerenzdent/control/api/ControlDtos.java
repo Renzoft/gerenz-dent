@@ -105,5 +105,10 @@ public final class ControlDtos {
 
   public record CambioEstadoResponse(ControlResponse control, LocalDate siguienteFechaSugerida) {}
 
+  /** "No vino": fecha (y hora) del siguiente control, o nada si todavía no se sabe. */
+  public record NoVinoRequest(LocalDate fecha, LocalTime hora) {}
+
+  public record NoVinoResponse(ControlResponse control, ControlResponse siguiente) {}
+
   public record SugerenciaResponse(LocalDate fecha) {}
 }

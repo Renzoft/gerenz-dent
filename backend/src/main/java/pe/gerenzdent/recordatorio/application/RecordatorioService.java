@@ -83,11 +83,11 @@ public class RecordatorioService {
         .toList();
   }
 
-  /** Controles vencidos con el mensaje de seguimiento (HU-18). */
+  /** "No vinieron" con el mensaje de seguimiento (HU-18): vencidos y no asistidos sin fecha. */
   @Transactional(readOnly = true)
   public List<MensajePreparado> seguimientos(UUID usuarioId) {
     String doctor = auth.usuarioActual(usuarioId).getNombre();
-    List<ControlConPaciente> lista = controles.vencidos(usuarioId);
+    List<ControlConPaciente> lista = controles.noVinieron(usuarioId);
     Map<UUID, Instant> envios = ultimosEnvios(lista, Recordatorio.Tipo.SEGUIMIENTO);
     return lista.stream()
         .map(cp ->
@@ -110,7 +110,10 @@ public class RecordatorioService {
     if (tipo == null) {
       throw new DatoInvalido("tipo", "Indica el tipo de recordatorio.");
     }
-    Control control = controles.registrarRecordatorio(usuarioId, controlId);
+    Control control =
+        tipo == Recordatorio.Tipo.SEGUIMIENTO
+            ? controles.registrarSeguimiento(usuarioId, controlId)
+            : controles.registrarRecordatorio(usuarioId, controlId);
     return recordatorios.save(
         new Recordatorio(control.getId(), tipo, proveedor.canal(), reloj.instant()));
   }

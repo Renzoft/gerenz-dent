@@ -46,9 +46,21 @@ En **Controles**, cada control muestra su estado con ícono (*Por recordar*, *Ho
 | Botón | Qué hace |
 |---|---|
 | **Asistió** (verde) | Registra la visita. En brackets suma la cuota de S/ 100. Pregunta si **pagó algo** y ofrece **agendar el siguiente** control. |
-| **Otras opciones** | **No vino** (cierra el control sin cobrar) · **Cambiar fecha** · **El paciente confirmó** · **Cancelar control** (en rojo, pide confirmación). |
+| **Otras opciones** | **No vino** (pregunta cuándo vuelve, ver abajo) · **Cambiar fecha** · **El paciente confirmó** · **Cancelar control** (en rojo, pide confirmación). |
 
 Si tiene más de un control, solo el más cercano lleva el botón verde.
+
+### Si el paciente no vino
+
+Toque **Otras opciones → No vino**. La app pregunta **"¿Cuándo vuelve?"**:
+
+- **Mañana · En 1 semana · En 15 días · Otra fecha**: queda anotado que no vino y se crea su
+  próximo control para ese día (mismo tratamiento, **no se cobra de nuevo**). Recibirá el
+  recordatorio el día anterior, como siempre.
+- **Todavía no sabe**: queda anotado que no vino y el paciente aparece en **Inicio → "No vinieron"**
+  con el botón **Escribirle**. Cuando le responda, entre a su ficha y toque **Agendar otro control**.
+
+Así ningún paciente se pierde. Si el paciente ya no seguirá el tratamiento, use **Cancelar control**.
 
 **¿Vino días después?** No hay problema: el paciente aparece en **Inicio → "No vinieron"** hasta que marque *Asistió*.
 Desde ahí toque **Escribirle** para mandarle un mensaje por WhatsApp.

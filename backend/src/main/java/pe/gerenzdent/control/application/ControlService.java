@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -88,6 +90,9 @@ public class ControlService {
   /** Control con su paciente (para listas de agenda y vencidos). */
   public record ControlConPaciente(Control control, Paciente paciente) {}
 
+  /** Resultado de "no vino": el control cerrado y, si se eligió fecha, el siguiente. */
+  public record NoVino(Control cerrado, Optional<Control> siguiente) {}
+
   /** Resultado de cambiar el estado: al marcar ASISTIO se sugiere el siguiente control (RN-03). */
   public record CambioDeEstado(Control control, Optional<LocalDate> siguienteFechaSugerida) {}
 
@@ -153,6 +158,33 @@ public class ControlService {
     return new CambioDeEstado(controles.saveAndFlush(control), sugerencia);
   }
 
+  /**
+   * El paciente no vino: el control queda como NO_ASISTIO (historial) y, si ya se sabe cuándo
+   * vuelve, se agenda el siguiente del mismo plan en el mismo paso (sin cargos nuevos). Sin fecha,
+   * el paciente queda en "No vinieron" para escribirle.
+   */
+  @Transactional
+  public NoVino noVino(UUID usuarioId, UUID controlId, LocalDate nuevaFecha, LocalTime nuevaHora) {
+    LocalDate hoy = calendario.hoy();
+    Control control = obtener(usuarioId, controlId);
+    control.cambiarEstado(EstadoControl.NO_ASISTIO, hoy);
+    controles.saveAndFlush(control);
+    if (nuevaFecha == null) {
+      return new NoVino(control, Optional.empty());
+    }
+    Control siguiente =
+        controles.saveAndFlush(new Control(control.getPlan(), nuevaFecha, nuevaHora, null, hoy));
+    return new NoVino(control, Optional.of(siguiente));
+  }
+
+  /** Seguimiento enviado (HU-18): vale para vencidos y para los que no vinieron sin fecha. */
+  @Transactional
+  public Control registrarSeguimiento(UUID usuarioId, UUID controlId) {
+    Control control = obtener(usuarioId, controlId);
+    control.registrarSeguimiento();
+    return controles.saveAndFlush(control);
+  }
+
   /** Marca que se envió un recordatorio: PENDIENTE pasa a RECORDADO (HU-17). */
   @Transactional
   public Control registrarRecordatorio(UUID usuarioId, UUID controlId) {
@@ -209,6 +241,20 @@ public class ControlService {
   @Transactional(readOnly = true)
   public List<ControlConPaciente> vencidos(UUID usuarioId) {
     return conPaciente(controles.vencidos(usuarioId, calendario.hoy(), EstadoControl.abiertos()));
+  }
+
+  /**
+   * "No vinieron" (HU-18): los vencidos más los que se marcaron "no asistió" y siguen sin fecha
+   * nueva. El más atrasado primero.
+   */
+  @Transactional(readOnly = true)
+  public List<ControlConPaciente> noVinieron(UUID usuarioId) {
+    List<ControlConPaciente> lista = new ArrayList<>(vencidos(usuarioId));
+    lista.addAll(conPaciente(controles.noVinieronSinFecha(usuarioId, EstadoControl.abiertos())));
+    lista.sort(
+        Comparator.comparing((ControlConPaciente cp) -> cp.control().getFecha())
+            .thenComparing(cp -> cp.paciente().getNombre()));
+    return lista;
   }
 
   /** Fecha sugerida para un control nuevo (HU-09). Vacío si el tratamiento no tiene intervalo. */

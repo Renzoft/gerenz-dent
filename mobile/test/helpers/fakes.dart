@@ -160,11 +160,13 @@ MensajeRecordatorio mensajePrueba({
   bool enviado = false,
   bool consiente = true,
   int diasAtraso = 0,
+  EstadoControl? estado,
 }) => MensajeRecordatorio(
   controlId: controlId,
   tipo: tipo,
   fecha: Fechas.hoy().add(const Duration(days: 1)),
-  estado: enviado ? EstadoControl.recordado : EstadoControl.pendiente,
+  estado:
+      estado ?? (enviado ? EstadoControl.recordado : EstadoControl.pendiente),
   diasAtraso: diasAtraso,
   tratamiento: 'Brackets (ortodoncia)',
   pacienteId: 'p-$controlId',
