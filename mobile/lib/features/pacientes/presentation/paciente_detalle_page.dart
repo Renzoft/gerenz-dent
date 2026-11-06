@@ -101,10 +101,24 @@ class _Ficha extends ConsumerStatefulWidget {
 
 class _FichaState extends ConsumerState<_Ficha>
     with SingleTickerProviderStateMixin {
-  late final TabController _pestanas = TabController(
-    length: _Pestana.values.length,
-    vsync: this,
-  )..addListener(() => setState(() {}));
+  // Se crea al tener contexto: el deslizamiento del indicador dura
+  // Movimiento.normal, o nada si el sistema pide quitar animaciones.
+  late final TabController _pestanas;
+  var _pestanasListas = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_pestanasListas) return;
+    _pestanasListas = true;
+    _pestanas = TabController(
+      length: _Pestana.values.length,
+      vsync: this,
+      animationDuration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : Movimiento.normal,
+    )..addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -142,11 +156,18 @@ class _FichaState extends ConsumerState<_Ficha>
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Espacio.pantalla),
+            // Fundido corto entre pestañas. Las dos quedan alineadas arriba
+            // (por defecto se centran y, si tienen distinto alto, el contenido
+            // nuevo aparece desplazado y luego salta).
             child: AnimatedSwitcher(
               duration: MediaQuery.disableAnimationsOf(context)
                   ? Duration.zero
-                  : Movimiento.normal,
+                  : Movimiento.rapido,
               switchInCurve: Movimiento.curvaEntrar,
+              layoutBuilder: (actual, anteriores) => Stack(
+                alignment: Alignment.topCenter,
+                children: [...anteriores, ?actual],
+              ),
               child: KeyedSubtree(
                 key: ValueKey(actual),
                 child: switch (actual) {

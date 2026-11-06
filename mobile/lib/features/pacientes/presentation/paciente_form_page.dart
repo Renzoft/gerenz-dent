@@ -7,6 +7,7 @@ import '../../../core/contactos/selector_contactos.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../application/pacientes_providers.dart';
 import '../data/pacientes_repository.dart';
@@ -247,6 +248,7 @@ class _FormularioState extends ConsumerState<_Formulario> {
             Card(
               clipBehavior: Clip.antiAlias,
               child: ExpansionTile(
+                expansionAnimationStyle: estiloDePlegable(context),
                 shape: const Border(),
                 collapsedShape: const Border(),
                 tilePadding: const EdgeInsets.symmetric(horizontal: Espacio.lg),
