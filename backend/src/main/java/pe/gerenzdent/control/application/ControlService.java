@@ -195,6 +195,25 @@ public class ControlService {
 
   @Transactional
   public Control reprogramar(UUID usuarioId, UUID controlId, LocalDate fecha, LocalTime hora) {
+    return reprogramar(usuarioId, controlId, fecha, hora, false);
+  }
+
+  /**
+   * Como {@link #reprogramar(UUID, UUID, LocalDate, LocalTime)}; con {@code confirmado} la fecha la
+   * dio el paciente: el control queda CONFIRMADO y no se le envía recordatorio.
+   */
+  @Transactional
+  public Control reprogramar(
+      UUID usuarioId, UUID controlId, LocalDate fecha, LocalTime hora, boolean confirmado) {
+    Control resultado = moverOSiguiente(usuarioId, controlId, fecha, hora);
+    if (confirmado) {
+      resultado.cambiarEstado(EstadoControl.CONFIRMADO, calendario.hoy());
+      return controles.saveAndFlush(resultado);
+    }
+    return resultado;
+  }
+
+  private Control moverOSiguiente(UUID usuarioId, UUID controlId, LocalDate fecha, LocalTime hora) {
     Control control = obtener(usuarioId, controlId);
     LocalDate hoy = calendario.hoy();
     if (control.getEstado() == EstadoControl.NO_ASISTIO) {

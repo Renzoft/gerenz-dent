@@ -552,6 +552,12 @@ const _enviado = ChipEstado(
   texto: 'Enviado',
 );
 
+const _confirmo = ChipEstado(
+  tono: Tono.exito,
+  icono: Icons.thumb_up_alt_outlined,
+  texto: 'Confirmó',
+);
+
 const _sinWhatsapp = ChipEstado(
   tono: Tono.neutro,
   icono: Icons.phone_disabled_outlined,
@@ -594,7 +600,10 @@ class _SeccionRecordatorios extends ConsumerWidget {
               icono: Icons.event_available,
             );
           }
-          final enviables = lista.where((m) => m.sePuedeEnviar).toList();
+          // Los que ya confirmaron no necesitan recordatorio: no cuentan.
+          final enviables = lista
+              .where((m) => m.sePuedeEnviar && !m.yaConfirmo)
+              .toList();
           final enviados = enviables.where((m) => m.enviado).length;
           return Card(
             clipBehavior: Clip.antiAlias,
@@ -690,7 +699,9 @@ class _FilaRecordatorio extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final m = mensaje;
     final Widget accion;
-    if (!m.sePuedeEnviar) {
+    if (m.yaConfirmo) {
+      accion = _confirmo;
+    } else if (!m.sePuedeEnviar) {
       accion = _sinWhatsapp;
     } else if (m.enviado) {
       accion = _enviado;

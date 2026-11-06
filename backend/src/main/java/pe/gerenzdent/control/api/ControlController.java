@@ -132,7 +132,12 @@ public class ControlController {
       @PathVariable UUID id,
       @Valid @RequestBody ReprogramarRequest request) {
     return ControlResponse.de(
-        servicio.reprogramar(UsuarioAutenticado.id(jwt), id, request.fecha(), request.hora()),
+        servicio.reprogramar(
+            UsuarioAutenticado.id(jwt),
+            id,
+            request.fecha(),
+            request.hora(),
+            Boolean.TRUE.equals(request.confirmado())),
         servicio.hoy());
   }
 

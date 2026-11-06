@@ -361,7 +361,14 @@ void main() {
           ),
         ],
       );
-      when(() => controles.reprogramar(any(), any(), any())).thenAnswer(
+      when(
+        () => controles.reprogramar(
+          any(),
+          any(),
+          any(),
+          confirmado: any(named: 'confirmado'),
+        ),
+      ).thenAnswer(
         (_) async =>
             controlPrueba(id: 'c-b', fecha: hoy.add(const Duration(days: 1))),
       );
@@ -377,14 +384,44 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Mañana'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('No, recordárselo'));
+      await tester.pumpAndSettle();
 
       verify(
         () => controles.reprogramar(
           'c-a',
           hoy.add(const Duration(days: 1)),
           null,
+          confirmado: false,
         ),
       ).called(1);
+    },
+  );
+
+  testWidgets(
+    'en "Recordatorios de mañana", al que ya confirmó no se le envía',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      when(() => recordatorios.pendientes()).thenAnswer(
+        (_) async => [
+          mensajePrueba(controlId: 'c-1', paciente: 'Juan Pérez'),
+          mensajePrueba(
+            controlId: 'c-2',
+            paciente: 'Ana Ríos',
+            estado: EstadoControl.confirmado,
+          ),
+        ],
+      );
+      await montar(tester);
+
+      // Ana se ve en la lista (para saber quién viene), pero como "Confirmó".
+      expect(find.text('Ana Ríos'), findsOneWidget);
+      expect(find.text('Confirmó'), findsOneWidget);
+      // Solo Juan cuenta para enviar.
+      expect(find.text('Enviar recordatorio'), findsOneWidget);
+      expect(find.text('Enviar recordatorios (2)'), findsNothing);
     },
   );
 

@@ -267,6 +267,27 @@ class RecordatorioIntegracionTest extends PruebaIntegracion {
   }
 
   @Test
+  void laFechaQueDioElPacienteQuedaConfirmadaYNoSeLeRecuerda() throws Exception {
+    String juan = crearPaciente("Juan", "987654321", true);
+    String control = agendar(juan, hoy, null);
+    noVino(control, null).andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            patch("/api/v1/controles/" + control + "/fecha")
+                .header("Authorization", autorizacion)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json("fecha", hoy.plusDays(1).toString(), "confirmado", true)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.estado").value("CONFIRMADO"));
+
+    // Sigue en la lista de mañana (para saber quién viene), pero ya como "Confirmó".
+    get("/api/v1/recordatorios/pendientes")
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].estado").value("CONFIRMADO"));
+  }
+
+  @Test
   void noSePuedeMarcarNoVinoDosVeces() throws Exception {
     String juan = crearPaciente("Juan", "987654321", true);
     String control = agendar(juan, hoy, null);

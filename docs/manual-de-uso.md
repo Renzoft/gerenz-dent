@@ -15,6 +15,8 @@ A las **4:30 p. m.** llega un aviso: *"Mañana tienes 3 pacientes por recordar"*
 4. Vuelva a la app → **"¿Se envió?"** → **Sí, se envió**. Queda ✔ *Enviado*.
 
 Si el paciente responde **SÍ**: en su ficha → **Otras opciones → "El paciente confirmó"** (opcional).
+Los pacientes que ya confirmaron aparecen en "Recordatorios de mañana" con la etiqueta **Confirmó**:
+no hace falta enviarles nada y no cuentan en el aviso de las 4:30.
 
 Para buscar a un paciente, toque **"Buscar paciente"** arriba en Inicio.
 
@@ -61,6 +63,9 @@ Toque **Otras opciones → No vino**. La app pregunta **"¿Cuándo vuelve?"**:
   con el botón **Escribirle**. Después de escribirle, el botón cambia a **Poner fecha**: cuando el
   paciente le diga qué día puede, tóquelo y elija el día. También puede hacerlo desde su ficha, donde
   aparece arriba como **"Falta nueva fecha" → Poner nueva fecha**.
+  La app pregunta **"¿El paciente confirmó esta fecha?"**:
+  - **Sí, confirmó**: queda como *Confirmó* y **no se le envía recordatorio** (ya le dijo que viene).
+  - **No, recordárselo**: se le enviará el recordatorio el día anterior, como a todos.
 
 Así ningún paciente se pierde. Si el paciente ya no seguirá el tratamiento, use **Cancelar control**.
 

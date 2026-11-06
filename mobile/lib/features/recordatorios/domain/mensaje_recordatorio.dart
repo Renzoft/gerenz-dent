@@ -79,6 +79,9 @@ class MensajeRecordatorio {
 
   bool get sePuedeEnviar => enlace != null;
 
-  /// Falta enviar y se puede enviar.
-  bool get porEnviar => sePuedeEnviar && !enviado;
+  /// El paciente ya confirmó que vendrá: no hace falta recordárselo.
+  bool get yaConfirmo => estado == EstadoControl.confirmado;
+
+  /// Falta enviar, se puede enviar y el paciente no ha confirmado todavía.
+  bool get porEnviar => sePuedeEnviar && !enviado && !yaConfirmo;
 }
