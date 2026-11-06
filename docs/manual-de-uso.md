@@ -1,6 +1,6 @@
 # GERENZ DENT · Manual de uso
 
-Guía rápida para el Dr. Marco Munayco Chacón. La app tiene 4 pestañas abajo: **Inicio · Pacientes · Deudas · Ajustes**.
+Guía rápida para el Dr. Marco Munayco Chacón. La app tiene 5 botones abajo: **Inicio · Agenda · Pacientes · Deudas · Ajustes**.
 
 ---
 
@@ -55,6 +55,16 @@ Desde ahí toque **Escribirle** para mandarle un mensaje por WhatsApp.
 
 En **Inicio** también verá **"Hoy vienen"** (los citados del día) y, plegado al final, **"Próximos días"**.
 
+### Agenda (calendario)
+
+Toque **Agenda** abajo. Verá el mes, y cada día con controles lleva un número: cuántos pacientes tiene.
+
+- Toque un día para ver, debajo, quiénes vienen (o vinieron): nombre, tratamiento, hora y estado
+  (*Por recordar*, *Recordado*, *Confirmó*, *Asistió*, *No vino*, *Vencido*).
+- Toque un paciente para abrir su ficha.
+- Las flechas **‹ ›** cambian de mes; **Hoy** vuelve al día de hoy.
+- Los controles cancelados no aparecen.
+
 ---
 
 ## 4. Pagos y deudas
@@ -85,7 +95,7 @@ por WhatsApp. Ahí están **Editar datos** y **Archivar paciente**.
 
 | Problema | Qué hacer |
 |---|---|
-| "Conectando con el consultorio…" tarda | Es normal la primera vez del día (hasta 1 minuto). |
+| "Conectando con el consultorio…" tarda | Es normal si la app no se usó en un rato (hasta 1 minuto). No la cierre: todo se carga solo. |
 | No llega el aviso de las 4:30 | Ajustes del teléfono → Apps → GERENZ DENT → **Notificaciones: activadas** y **sin ahorro de batería**. |
 | WhatsApp no se abre | Verifique que WhatsApp esté instalado y actualizado. |
 | Pide iniciar sesión de nuevo | Ingrese su correo y contraseña; sus pacientes no se pierden (están en el servidor). |

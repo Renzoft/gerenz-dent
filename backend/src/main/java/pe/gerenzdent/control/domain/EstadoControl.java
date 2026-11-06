@@ -17,6 +17,8 @@ public enum EstadoControl {
   CANCELADO;
 
   private static final Set<EstadoControl> ABIERTOS = Set.of(PENDIENTE, RECORDADO, CONFIRMADO);
+  private static final Set<EstadoControl> PARA_CALENDARIO =
+      Set.of(PENDIENTE, RECORDADO, CONFIRMADO, ASISTIO, NO_ASISTIO);
 
   public boolean esAbierto() {
     return ABIERTOS.contains(this);
@@ -40,5 +42,10 @@ public enum EstadoControl {
 
   public static Set<EstadoControl> abiertos() {
     return ABIERTOS;
+  }
+
+  /** Lo que muestra el calendario: abiertos y también los que asistieron o no vinieron. */
+  public static Set<EstadoControl> paraCalendario() {
+    return PARA_CALENDARIO;
   }
 }
