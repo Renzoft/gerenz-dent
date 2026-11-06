@@ -1,8 +1,7 @@
-# Identidad visual — GERENZ DENT (v2, "Cristal")
+# Identidad visual — GERENZ DENT ("Cristal")
 
-Elegida el 2026-11-05 entre 10 propuestas (dos rondas). Concepto: una **muela de vidrio** con reflejo y
-un destello, sobre luces celeste y verde en un fondo celeste profundo. Conserva lo que funcionaba del
-logo anterior (el diente que brilla) con un estilo de ícono actual.
+Concepto: una **muela de vidrio** con reflejo y un destello, sobre luces celeste y verde en un fondo
+celeste profundo. Transmite limpieza y una sonrisa que brilla, con un estilo de ícono actual.
 
 ## Archivos
 

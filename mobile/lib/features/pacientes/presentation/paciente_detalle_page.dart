@@ -19,7 +19,7 @@ import '../data/pacientes_repository.dart';
 import '../domain/formato_whatsapp.dart';
 import '../domain/paciente.dart';
 
-/// Ficha del paciente (HU-05), rediseño v2 (pantalla piloto).
+/// Ficha del paciente (HU-05).
 ///
 /// Cabecera con lo esencial (nombre, WhatsApp, alergia, próximo control y
 /// deuda) y el resto agrupado en tres pestañas: Controles · Pagos · Datos.

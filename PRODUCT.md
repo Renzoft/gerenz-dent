@@ -59,7 +59,6 @@ software de clínicas: reemplaza la memoria y el cuaderno del doctor.
 ## Evidence on Hand
 
 - Datos de pacientes: datos personales y de salud. En pruebas, capturas y ejemplos solo datos ficticios.
-- Capturas del estado actual (datos ficticios): `docs/rediseno/capturas/antes/`.
 - No hay testimonios ni métricas de uso; no inventarlos.
 
 ## Product Principles

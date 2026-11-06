@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 
-/// Componentes base del sistema v2 (docs/rediseno/02-sistema-de-diseno.md).
+/// Componentes base del sistema de diseño (DESIGN.md).
 ///
 /// Regla: un estado nunca se comunica solo con color; siempre lleva ícono y
 /// texto.

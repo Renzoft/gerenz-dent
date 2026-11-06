@@ -1,4 +1,4 @@
-// break-ui (rediseño, Fase 4): cada pantalla con el peor caso realista.
+// Robustez: cada pantalla con el peor caso realista (nada se desborda ni se corta).
 //
 // Datos ficticios, con los límites reales del esquema (backend V1–V8):
 // nombres de 80 caracteres, notas de 140, alergias de 200 y montos grandes.
