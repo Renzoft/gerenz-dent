@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/formato/fechas.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/theme/tokens.dart';
 import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../../recordatorios/application/recordatorios_providers.dart';
@@ -83,6 +84,36 @@ Future<EleccionVuelta?> elegirCuandoVuelve(
   }
 }
 
+/// "¿El paciente confirmó esta fecha?". `true`: la dio o confirmó el
+/// paciente (no se le recuerda); `false`: se le recuerda el día anterior;
+/// `null`: cerró sin responder (no se guarda nada).
+Future<bool?> _preguntarSiConfirmo(BuildContext context, DateTime fecha) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('¿El paciente confirmó esta fecha?'),
+      content: Text(
+        sinCortes(
+          'Si el paciente le dijo que viene el ${Fechas.corta(fecha)}, '
+          'no hace falta enviarle recordatorio.',
+        ),
+      ),
+      actionsOverflowDirection: VerticalDirection.up,
+      actionsOverflowButtonSpacing: Espacio.sm,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('No, recordárselo'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Sí, confirmó'),
+        ),
+      ],
+    ),
+  );
+}
+
 /// "Poner nueva fecha" a un control que no se cumplió: si está vencido lo
 /// mueve; si se marcó "No vino", agenda el siguiente del mismo tratamiento
 /// (sin cobros nuevos). Devuelve `true` si se guardó.
@@ -95,14 +126,19 @@ Future<bool> ponerNuevaFecha(
   final eleccion = await elegirCuandoVuelve(context);
   final fecha = eleccion?.fecha;
   if (fecha == null || !context.mounted) return false;
+  final confirmo = await _preguntarSiConfirmo(context, fecha);
+  if (confirmo == null || !context.mounted) return false;
   try {
     final control = await ref
         .read(controlesRepositoryProvider)
-        .reprogramar(controlId, fecha, null);
+        .reprogramar(controlId, fecha, null, confirmado: confirmo);
     if (!context.mounted) return true;
+    final cuando = sinCortes(control.fechaTexto());
     mostrarMensaje(
       context,
-      'Próximo control: ${sinCortes(control.fechaTexto())}',
+      confirmo
+          ? 'Próximo control: $cuando. Ya confirmó: no se le enviará recordatorio.'
+          : 'Próximo control: $cuando. Se le recordará el día anterior.',
     );
     refrescarRecordatorios(ref);
     refrescarControles(ref, pacienteId);

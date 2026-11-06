@@ -51,17 +51,24 @@ class ControlesRepository {
         );
       });
 
-  Future<Control> reprogramar(String id, DateTime fecha, TimeOfDay? hora) =>
-      _llamar(() async {
-        final r = await _dio.patch<Map<String, dynamic>>(
-          '/api/v1/controles/$id/fecha',
-          data: {
-            'fecha': Fechas.aIso(fecha),
-            if (hora != null) 'hora': Fechas.horaAApi(hora),
-          },
-        );
-        return Control.fromJson(r.data!);
-      });
+  /// Con [confirmado], la fecha la dio el paciente: queda "Confirmó" y no
+  /// se le envía recordatorio.
+  Future<Control> reprogramar(
+    String id,
+    DateTime fecha,
+    TimeOfDay? hora, {
+    bool confirmado = false,
+  }) => _llamar(() async {
+    final r = await _dio.patch<Map<String, dynamic>>(
+      '/api/v1/controles/$id/fecha',
+      data: {
+        'fecha': Fechas.aIso(fecha),
+        if (hora != null) 'hora': Fechas.horaAApi(hora),
+        if (confirmado) 'confirmado': true,
+      },
+    );
+    return Control.fromJson(r.data!);
+  });
 
   Future<List<Control>> historial(String pacienteId) =>
       _lista('/api/v1/pacientes/$pacienteId/controles');

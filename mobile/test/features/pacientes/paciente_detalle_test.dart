@@ -145,7 +145,14 @@ void main() {
           ),
         ],
       );
-      when(() => controles.reprogramar(any(), any(), any())).thenAnswer(
+      when(
+        () => controles.reprogramar(
+          any(),
+          any(),
+          any(),
+          confirmado: any(named: 'confirmado'),
+        ),
+      ).thenAnswer(
         (_) async => controlPrueba(
           id: 'c-nuevo',
           planId: 'pl-1',
@@ -167,15 +174,23 @@ void main() {
       expect(find.text('Todavía no sabe'), findsNothing);
       await tester.tap(find.text('En 1 semana'));
       await tester.pumpAndSettle();
+      // La fecha la dio el paciente: se pregunta si confirmó.
+      expect(find.text('¿El paciente confirmó esta fecha?'), findsOneWidget);
+      await tester.tap(find.text('Sí, confirmó'));
+      await tester.pumpAndSettle();
 
       verify(
         () => controles.reprogramar(
           'c-nv',
           hoy.add(const Duration(days: 7)),
           null,
+          confirmado: true,
         ),
       ).called(1);
-      expect(find.textContaining('Próximo control:'), findsOneWidget);
+      expect(
+        find.textContaining('Ya confirmó: no se le enviará recordatorio.'),
+        findsOneWidget,
+      );
     },
   );
 }
