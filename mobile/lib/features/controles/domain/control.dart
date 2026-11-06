@@ -158,6 +158,15 @@ class NuevoControl {
   };
 }
 
+/// Resultado de "No vino": el control cerrado y, si se eligió fecha, el
+/// siguiente control del mismo tratamiento.
+class ResultadoNoVino {
+  const ResultadoNoVino({required this.control, this.siguiente});
+
+  final Control control;
+  final Control? siguiente;
+}
+
 /// Resultado de cambiar el estado: al marcar "Asistió" puede venir la fecha
 /// sugerida para el siguiente control.
 class CambioDeEstado {

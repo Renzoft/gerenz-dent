@@ -36,6 +36,21 @@ class ControlesRepository {
         );
       });
 
+  /// El paciente no vino. Con [fecha] se agenda el siguiente control del
+  /// mismo tratamiento (sin cobros nuevos); sin fecha, queda en "No vinieron".
+  Future<ResultadoNoVino> noVino(String id, {DateTime? fecha}) =>
+      _llamar(() async {
+        final r = await _dio.post<Map<String, dynamic>>(
+          '/api/v1/controles/$id/no-vino',
+          data: {if (fecha != null) 'fecha': Fechas.aIso(fecha)},
+        );
+        final siguiente = r.data!['siguiente'] as Map<String, dynamic>?;
+        return ResultadoNoVino(
+          control: Control.fromJson(r.data!['control'] as Map<String, dynamic>),
+          siguiente: siguiente == null ? null : Control.fromJson(siguiente),
+        );
+      });
+
   Future<Control> reprogramar(String id, DateTime fecha, TimeOfDay? hora) =>
       _llamar(() async {
         final r = await _dio.patch<Map<String, dynamic>>(

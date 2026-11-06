@@ -557,7 +557,11 @@ const _sinWhatsapp = ChipEstado(
   texto: 'Sin WhatsApp',
 );
 
-String _dias(int n) => n == 1 ? 'hace 1 día' : 'hace $n días';
+String _dias(int n) => switch (n) {
+  0 => 'hoy',
+  1 => 'hace 1 día',
+  _ => 'hace $n días',
+};
 
 String _conHora(String tratamiento, TimeOfDay? hora) =>
     hora == null ? tratamiento : '$tratamiento · ${Fechas.hora(hora)}';
@@ -786,7 +790,10 @@ class _SeccionNoVinieron extends ConsumerWidget {
                   for (final m in lista)
                     _FilaPaciente(
                       nombre: m.pacienteNombre,
-                      detalle: '${m.tratamiento} · ${_dias(m.diasAtraso)}',
+                      // "No vino" (marcado) o vencido (nadie lo marcó).
+                      detalle: m.estado == EstadoControl.noAsistio
+                          ? '${m.tratamiento} · no vino ${_dias(m.diasAtraso)}'
+                          : '${m.tratamiento} · ${_dias(m.diasAtraso)}',
                       pacienteId: m.pacienteId,
                       accion: Padding(
                         padding: const EdgeInsets.only(right: Espacio.sm),

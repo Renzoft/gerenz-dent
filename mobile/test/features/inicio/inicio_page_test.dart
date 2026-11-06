@@ -313,6 +313,34 @@ void main() {
     expect(find.text('Rosa Quispe'), findsOneWidget);
   });
 
+  testWidgets('"No vinieron" distingue a los marcados "No vino"', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    when(() => recordatorios.seguimientos()).thenAnswer(
+      (_) async => [
+        mensajePrueba(
+          controlId: 'c-a',
+          paciente: 'Ana Ríos',
+          tipo: TipoRecordatorio.seguimiento,
+          estado: EstadoControl.noAsistio,
+        ),
+        mensajePrueba(
+          controlId: 'c-b',
+          paciente: 'Luis Soto',
+          tipo: TipoRecordatorio.seguimiento,
+          diasAtraso: 3,
+        ),
+      ],
+    );
+    await montar(tester);
+
+    expect(find.text('Brackets (ortodoncia) · no vino hoy'), findsOneWidget);
+    expect(find.text('Brackets (ortodoncia) · hace 3 días'), findsOneWidget);
+  });
+
   testWidgets('"No vinieron" ofrece escribirles', (tester) async {
     when(() => recordatorios.seguimientos()).thenAnswer(
       (_) async => [
