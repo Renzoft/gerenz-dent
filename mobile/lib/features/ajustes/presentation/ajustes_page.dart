@@ -168,7 +168,7 @@ class _AjustesPageState extends ConsumerState<AjustesPage> {
           const SizedBox(height: Espacio.xl),
           const Center(
             child: Text(
-              'GERENZ DENT · versión 1.5.1',
+              'GERENZ DENT · versión 1.5.2',
               style: TextStyle(
                 fontSize: TipoTam.etiqueta,
                 color: Tokens.textoSecundario,
