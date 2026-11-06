@@ -40,7 +40,7 @@ Para buscar a un paciente, toque **"Buscar paciente"** arriba en Inicio.
 La ficha tiene arriba lo importante (nombre, WhatsApp, **alergias en rojo**, próximo control y
 cuánto debe) y tres pestañas: **Controles · Pagos · Datos**.
 
-En **Controles**, cada control muestra su estado con ícono (*Por recordar*, *Recordado*, *Confirmó*,
+En **Controles**, cada control muestra su estado con ícono (*Por recordar*, *Hoy*, *Recordado*, *Confirmó*,
 *Vencido*) y un botón verde:
 
 | Botón | Qué hace |
@@ -60,7 +60,9 @@ En **Inicio** también verá **"Hoy vienen"** (los citados del día) y, plegado 
 Toque **Agenda** abajo. Verá el mes, y cada día con controles lleva un número: cuántos pacientes tiene.
 
 - Toque un día para ver, debajo, quiénes vienen (o vinieron): nombre, tratamiento, hora y estado
-  (*Por recordar*, *Recordado*, *Confirmó*, *Asistió*, *No vino*, *Vencido*).
+  (*Por recordar*, *Hoy*, *Recordado*, *Confirmó*, *Asistió*, *No vino*, *Vencido*).
+- **Hoy** = viene hoy y no se le envió recordatorio (por ejemplo, llamó y viene el mismo día).
+  No hace falta recordarle; después de la cita, márquelo como **Asistió** o **No vino**.
 - Toque un paciente para abrir su ficha.
 - Las flechas **‹ ›** cambian de mes; **Hoy** vuelve al día de hoy.
 - Los controles cancelados no aparecen.

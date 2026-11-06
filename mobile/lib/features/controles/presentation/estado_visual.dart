@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/formato/fechas.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/ui/componentes.dart';
 import '../domain/control.dart';
@@ -9,19 +10,32 @@ import '../domain/control.dart';
 /// | Estado      | Tono     | Ícono                 |
 /// |-------------|----------|-----------------------|
 /// | Por recordar| neutro   | schedule              |
+/// | Hoy         | marca    | today                 |
 /// | Recordado   | marca    | mark_chat_read        |
 /// | Confirmó    | éxito    | thumb_up              |
 /// | Asistió     | éxito    | check_circle          |
 /// | No vino     | peligro  | person_off            |
 /// | Cancelado   | neutro   | block                 |
 /// | Vencido     | aviso    | event_busy            |
-ChipEstado chipDeControl(Control c) {
+///
+/// "Hoy": control de hoy que nunca se recordó (por ejemplo, el paciente llamó
+/// y viene el mismo día). Los recordatorios salen el día anterior, así que ya
+/// no se puede "recordar" y mostrar "Por recordar" confundiría.
+ChipEstado chipDeControl(Control c, {DateTime? hoy}) {
   if (c.vencido && c.esAbierto) {
     return const ChipEstado(
       tono: Tono.aviso,
       icono: Icons.event_busy_outlined,
       texto: 'Vencido',
     );
+  }
+  final hoyDia = Fechas.hoy(hoy);
+  final esDeHoy =
+      c.fecha.year == hoyDia.year &&
+      c.fecha.month == hoyDia.month &&
+      c.fecha.day == hoyDia.day;
+  if (c.estado == EstadoControl.pendiente && esDeHoy) {
+    return const ChipEstado(tono: Tono.marca, icono: Icons.today, texto: 'Hoy');
   }
   return switch (c.estado) {
     EstadoControl.pendiente => const ChipEstado(

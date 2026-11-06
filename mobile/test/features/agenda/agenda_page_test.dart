@@ -87,6 +87,9 @@ void main() {
     expect(find.text('Rosa Quispe'), findsOneWidget);
     expect(find.text('Asistió'), findsOneWidget);
     expect(find.text('Juan Pérez'), findsOneWidget);
+    // Juan está citado hoy y nunca se le recordó: "Hoy", no "Por recordar".
+    expect(find.text('Hoy'), findsWidgets);
+    expect(find.text('Por recordar'), findsNothing);
     verify(
       () => controles.agenda(
         desde: DateTime(2026, 11),

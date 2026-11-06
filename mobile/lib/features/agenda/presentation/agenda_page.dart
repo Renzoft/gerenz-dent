@@ -386,7 +386,7 @@ class _ListaDelDia extends StatelessWidget {
         children: [
           for (var i = 0; i < controles.length; i++) ...[
             if (i > 0) const Divider(height: 1),
-            _FilaControl(control: controles[i]),
+            _FilaControl(control: controles[i], hoy: hoy),
           ],
         ],
       ),
@@ -395,9 +395,10 @@ class _ListaDelDia extends StatelessWidget {
 }
 
 class _FilaControl extends StatelessWidget {
-  const _FilaControl({required this.control});
+  const _FilaControl({required this.control, required this.hoy});
 
   final Control control;
+  final DateTime hoy;
 
   @override
   Widget build(BuildContext context) {
@@ -436,7 +437,7 @@ class _FilaControl extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: Espacio.xs),
-                    chipDeControl(c),
+                    chipDeControl(c, hoy: hoy),
                   ],
                 ),
               ),
