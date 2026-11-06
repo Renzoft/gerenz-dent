@@ -65,3 +65,18 @@ New-Item -ItemType Directory -Force C:\tmp
 ```
 
 Luego cerrar y abrir VS Code / la terminal.
+
+## 5. El servidor "dormido" (plan gratuito)
+
+Render apaga la API tras **15 minutos sin uso** y la enciende con la siguiente petición.
+
+- **Arranque más rápido:** la imagen Docker trae una caché de clases de Java (CDS) que se entrena al
+  construirla (ver `backend/Dockerfile`). Medido en local con 0.5 CPU y 512 MB: de ~78 s a ~30 s hasta
+  "Started". En Render la espera total incluye además encender el contenedor.
+- **La app no se traba mientras despierta:** las consultas (GET) se repiten solas hasta 100 s y, cuando
+  el servidor responde, Inicio recarga lo que había fallado (`InterceptorDespertar`). No hace falta cerrar
+  la app.
+- **Cuotas:** Render da 750 h/mes por cuenta y Neon 100 CU-h/mes por proyecto. Con el uso de un solo doctor
+  (unas 10 entradas al día) se usa una fracción de ambas. No conviene "despertar" la API cada pocos minutos
+  para que nunca duerma: Render lo considera abuso del plan gratuito y la base de datos tampoco dormiría,
+  así que se gastaría su cuota. Se mantiene solo el aviso diario de `warmup.yml` (4:15 p. m.).
