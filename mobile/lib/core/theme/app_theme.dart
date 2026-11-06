@@ -120,6 +120,10 @@ abstract final class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      // En Android, Material 3 usa InkSparkle (617 ms, brillo "orgánico" y un
+      // shader que se compila la primera vez). Para toques que se repiten
+      // decenas de veces al día, el ripple clásico es más rápido y sobrio.
+      splashFactory: InkRipple.splashFactory,
       colorScheme: esquema,
       textTheme: textos,
       scaffoldBackgroundColor: Tokens.fondo,

@@ -826,6 +826,7 @@ class _Proximos extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         key: const Key('proximos-dias'),
+        expansionAnimationStyle: estiloDePlegable(context),
         shape: const Border(),
         collapsedShape: const Border(),
         tilePadding: const EdgeInsets.symmetric(horizontal: Espacio.lg),

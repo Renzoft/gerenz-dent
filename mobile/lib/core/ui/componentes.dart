@@ -24,6 +24,19 @@ bool letraGrande(BuildContext context) =>
     MediaQuery.textScalerOf(context).scale(TipoTam.cuerpo) >=
     TipoTam.cuerpo * 1.5;
 
+/// Cómo se abren y cierran las secciones plegables (ExpansionTile): rápido y
+/// con salida suave; sin animación si el sistema pide quitar animaciones.
+/// (El valor por defecto de Flutter es `Curves.easeIn`, que arranca lento.)
+AnimationStyle estiloDePlegable(BuildContext context) =>
+    MediaQuery.disableAnimationsOf(context)
+    ? AnimationStyle.noAnimation
+    : AnimationStyle(
+        duration: Movimiento.normal,
+        curve: Movimiento.curvaEntrar,
+        reverseDuration: Movimiento.normal,
+        reverseCurve: Movimiento.curvaEntrar.flipped,
+      );
+
 /// Pestaña cuyo texto se achica (en vez de cortarse) con letra muy grande.
 class PestanaTexto extends StatelessWidget {
   const PestanaTexto(this.texto, {super.key});
