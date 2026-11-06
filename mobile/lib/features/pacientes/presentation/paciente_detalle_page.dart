@@ -10,6 +10,7 @@ import '../../../core/ui/componentes.dart';
 import '../../../core/widgets/estados.dart';
 import '../../controles/application/controles_providers.dart';
 import '../../controles/presentation/agendar_control_sheet.dart';
+import '../../controles/domain/control.dart';
 import '../../controles/presentation/tarjeta_control.dart';
 import '../../cuenta/application/cuenta_providers.dart';
 import '../../cuenta/presentation/seccion_cuenta.dart';
@@ -434,15 +435,27 @@ class _PestanaControles extends ConsumerWidget {
         final abiertos = lista.where((c) => c.esAbierto).toList()
           ..sort((a, b) => a.fecha.compareTo(b.fecha));
         final cerrados = lista.where((c) => !c.esAbierto).toList();
+        final sinFecha = paciente.archivado
+            ? const <Control>[]
+            : sinFechaNueva(lista);
         final puedeAgendar = !paciente.archivado;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            EncabezadoSeccion(
-              abiertos.length > 1 ? 'Próximos controles' : 'Próximo control',
-            ),
-            if (abiertos.isEmpty)
+            // "No vino" y todavía sin fecha: primero, para que no se pierda.
+            if (sinFecha.isNotEmpty) ...[
+              const EncabezadoSeccion('Falta nueva fecha'),
+              for (final (i, c) in sinFecha.indexed) ...[
+                TarjetaSinFecha(control: c, destacada: i == 0),
+                const SizedBox(height: Espacio.md),
+              ],
+            ],
+            if (abiertos.isNotEmpty || sinFecha.isEmpty)
+              EncabezadoSeccion(
+                abiertos.length > 1 ? 'Próximos controles' : 'Próximo control',
+              ),
+            if (abiertos.isEmpty && sinFecha.isEmpty)
               EstadoVacio(
                 icono: Icons.event_available_outlined,
                 texto: 'No tiene un control agendado.',
@@ -458,7 +471,9 @@ class _PestanaControles extends ConsumerWidget {
               TarjetaControl(
                 control: c,
                 pacienteNombre: paciente.nombre,
-                destacada: i == 0,
+                // Una sola acción principal: si arriba hay "Poner nueva
+                // fecha" en verde, aquí va en versión secundaria.
+                destacada: i == 0 && sinFecha.isEmpty,
               ),
               const SizedBox(height: Espacio.md),
             ],

@@ -15,6 +15,7 @@ import '../application/controles_providers.dart';
 import '../data/controles_repository.dart';
 import '../domain/control.dart';
 import 'agendar_control_sheet.dart';
+import 'cuando_vuelve.dart';
 import 'estado_visual.dart';
 
 /// Control abierto: una acción principal (Asistió) y "Otras opciones".
@@ -140,52 +141,14 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
   /// Con fecha se agenda el siguiente control; con "Todavía no sabe" queda
   /// en "No vinieron" (Inicio) para escribirle.
   Future<void> _noVino() async {
-    final hoy = Fechas.hoy();
-    String dia(DateTime f) => Fechas.corta(f);
-    final eleccion = await mostrarOpciones<_CuandoVuelve>(
-      context,
-      titulo: '¿Cuándo vuelve?',
-      opciones: [
-        for (final c in _CuandoVuelve.conFecha)
-          Opcion(
-            valor: c,
-            icono: Icons.event_available_outlined,
-            titulo: c.titulo,
-            detalle: dia(c.fecha(hoy)!),
-          ),
-        const Opcion(
-          valor: _CuandoVuelve.otraFecha,
-          icono: Icons.calendar_month_outlined,
-          titulo: 'Otra fecha',
-          detalle: 'Elegir en el calendario',
-        ),
-        const Opcion(
-          valor: _CuandoVuelve.noSabe,
-          icono: Icons.help_outline,
-          titulo: 'Todavía no sabe',
-          detalle: 'Queda en "No vinieron" para escribirle',
-        ),
-      ],
-    );
+    final eleccion = await elegirCuandoVuelve(context, permitirNoSabe: true);
     if (eleccion == null || !mounted) return;
-
-    DateTime? fecha = eleccion.fecha(hoy);
-    if (eleccion == _CuandoVuelve.otraFecha) {
-      fecha = await showDatePicker(
-        context: context,
-        initialDate: hoy.add(const Duration(days: 7)),
-        firstDate: hoy,
-        lastDate: hoy.add(const Duration(days: 730)),
-        helpText: '¿Cuándo vuelve?',
-      );
-      if (fecha == null || !mounted) return;
-    }
 
     setState(() => _procesando = true);
     try {
       final r = await ref
           .read(controlesRepositoryProvider)
-          .noVino(_c.id, fecha: fecha);
+          .noVino(_c.id, fecha: eleccion.fecha);
       if (!mounted) return;
       final siguiente = r.siguiente;
       mostrarMensaje(
@@ -375,23 +338,114 @@ class _TarjetaControlState extends ConsumerState<TarjetaControl> {
 
 enum _OpcionControl { noVino, cambiarFecha, confirmo, cancelar }
 
-/// Respuestas a "¿Cuándo vuelve?" después de "No vino".
-enum _CuandoVuelve {
-  manana('Mañana', 1),
-  enUnaSemana('En 1 semana', 7),
-  enQuinceDias('En 15 días', 15),
-  otraFecha('Otra fecha', null),
-  noSabe('Todavía no sabe', null);
+/// Tratamiento cuyo último control fue "No vino" y todavía no tiene fecha
+/// nueva: no se pierde; se le pone fecha cuando el paciente responda.
+class TarjetaSinFecha extends ConsumerStatefulWidget {
+  const TarjetaSinFecha({
+    super.key,
+    required this.control,
+    this.destacada = true,
+  });
 
-  const _CuandoVuelve(this.titulo, this.dias);
+  /// El control que quedó como "No vino".
+  final Control control;
 
-  final String titulo;
-  final int? dias;
+  /// Con otro control abierto en pantalla, el botón va en versión secundaria
+  /// (una acción principal por pantalla).
+  final bool destacada;
 
-  static const conFecha = [manana, enUnaSemana, enQuinceDias];
+  @override
+  ConsumerState<TarjetaSinFecha> createState() => _TarjetaSinFechaState();
+}
 
-  DateTime? fecha(DateTime hoy) =>
-      dias == null ? null : hoy.add(Duration(days: dias!));
+class _TarjetaSinFechaState extends ConsumerState<TarjetaSinFecha> {
+  bool _procesando = false;
+
+  Future<void> _ponerFecha() async {
+    setState(() => _procesando = true);
+    try {
+      await ponerNuevaFecha(
+        context,
+        ref,
+        controlId: widget.control.id,
+        pacienteId: widget.control.pacienteId,
+      );
+    } finally {
+      if (mounted) setState(() => _procesando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.control;
+    final boton = widget.destacada
+        ? FilledButton.icon(
+            onPressed: _procesando ? null : _ponerFecha,
+            icon: const Icon(Icons.event_available),
+            label: const Text('Poner nueva fecha'),
+          )
+        : OutlinedButton.icon(
+            onPressed: _procesando ? null : _ponerFecha,
+            icon: const Icon(Icons.event_available),
+            label: const Text('Poner nueva fecha'),
+          );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Espacio.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              c.tratamientoNombre,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: Espacio.sm),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: ChipEstado(
+                tono: Tono.aviso,
+                icono: Icons.event_busy_outlined,
+                texto: 'Falta nueva fecha',
+              ),
+            ),
+            const SizedBox(height: Espacio.md),
+            Text(
+              sinCortes(
+                'No vino el ${Fechas.corta(c.fecha)}. '
+                'Cuando le diga qué día puede, póngale la fecha.',
+              ),
+              style: const TextStyle(
+                fontSize: TipoTam.cuerpo,
+                color: Tokens.textoSecundario,
+              ),
+            ),
+            const SizedBox(height: Espacio.lg),
+            boton,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Planes cuyo último control fue "No vino" y no tienen otro control
+/// después ni uno abierto. El más antiguo primero.
+List<Control> sinFechaNueva(List<Control> controles) {
+  final porPlan = <String, List<Control>>{};
+  for (final c in controles) {
+    final plan = c.planId;
+    if (plan == null) continue;
+    porPlan.putIfAbsent(plan, () => []).add(c);
+  }
+  final resultado = <Control>[];
+  for (final lista in porPlan.values) {
+    if (lista.any((c) => c.esAbierto)) continue;
+    lista.sort((a, b) => a.fecha.compareTo(b.fecha));
+    final ultimo = lista.last;
+    if (ultimo.estado == EstadoControl.noAsistio) resultado.add(ultimo);
+  }
+  resultado.sort((a, b) => a.fecha.compareTo(b.fecha));
+  return resultado;
 }
 
 /// Fila del historial (controles cerrados): tratamiento, día y estado.
