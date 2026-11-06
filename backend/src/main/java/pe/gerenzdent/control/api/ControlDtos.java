@@ -46,8 +46,11 @@ public final class ControlDtos {
 
   public record CambioEstadoRequest(@NotNull(message = "Indica el estado") EstadoControl estado) {}
 
+  /** {@code confirmado}: la fecha la dio el paciente; queda "Confirmó" y no se le recuerda. */
   public record ReprogramarRequest(
-      @NotNull(message = "Elige la nueva fecha") LocalDate fecha, LocalTime hora) {}
+      @NotNull(message = "Elige la nueva fecha") LocalDate fecha,
+      LocalTime hora,
+      Boolean confirmado) {}
 
   public record TratamientoResumen(UUID id, String nombre) {}
 
