@@ -72,6 +72,13 @@ class _InicioPageState extends ConsumerState<InicioPage> {
         if (anterior != null && anterior != siguiente) _reprogramarAvisos();
       },
     );
+    // Cuando el servidor termina de despertar, las secciones que fallaron
+    // mientras tanto se recargan solas: no hace falta cerrar la app.
+    ref.listen(estadoServidorProvider, (anterior, siguiente) {
+      if (siguiente.value == true && anterior?.value != true) {
+        _recargarLasQueFallaron(ref);
+      }
+    });
     final estado = ref.watch(estadoServidorProvider);
     final usuario = ref.watch(authControllerProvider).value;
 
@@ -118,7 +125,8 @@ class _InicioPageState extends ConsumerState<InicioPage> {
                                     ),
                                     titulo: 'Conectando con el consultorio…',
                                     detalle:
-                                        'La primera conexión del día puede tardar hasta 1 minuto.',
+                                        'Si la app no se usó en un rato, puede tardar hasta 1 minuto. '
+                                        'No hace falta cerrarla: todo se carga solo.',
                                   ),
                                   data: (_) => _ErrorConexion(
                                     onReintentar: () => _reintentarTodo(ref),
@@ -146,6 +154,15 @@ class _InicioPageState extends ConsumerState<InicioPage> {
         ),
       ),
     );
+  }
+
+  static void _recargarLasQueFallaron(WidgetRef ref) {
+    if (ref.read(recordatoriosMananaProvider).hasError ||
+        ref.read(seguimientosProvider).hasError) {
+      refrescarRecordatorios(ref); // también recarga la agenda
+    } else if (ref.read(agendaSemanaProvider).hasError) {
+      ref.invalidate(agendaSemanaProvider);
+    }
   }
 
   static void _reintentarTodo(WidgetRef ref) {

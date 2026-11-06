@@ -5,6 +5,7 @@ import '../../features/auth/application/auth_controller.dart';
 import '../../features/auth/data/almacen_sesion.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../config/env.dart';
+import 'interceptor_despertar.dart';
 import 'interceptor_sesion.dart';
 
 /// Los tiempos son generosos a propósito: en el plan gratuito de Render el
@@ -19,6 +20,7 @@ BaseOptions opcionesBase() => BaseOptions(
 /// Cliente sin sesión: login, refresh, logout y health.
 final dioBaseProvider = Provider<Dio>((ref) {
   final dio = Dio(opcionesBase());
+  dio.interceptors.add(InterceptorDespertar(dio: dio));
   ref.onDispose(dio.close);
   return dio;
 });
@@ -37,6 +39,9 @@ final dioProvider = Provider<Dio>((ref) {
           ref.read(authControllerProvider.notifier).sesionExpirada(),
     ),
   );
+  // Después de la sesión: si el servidor está despertando, la consulta se
+  // repite sola (y vuelve a pasar por la sesión, que pone el token).
+  dio.interceptors.add(InterceptorDespertar(dio: dio));
   ref.onDispose(dio.close);
   return dio;
 });
