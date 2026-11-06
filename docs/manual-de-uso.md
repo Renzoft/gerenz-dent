@@ -58,7 +58,9 @@ Toque **Otras opciones → No vino**. La app pregunta **"¿Cuándo vuelve?"**:
   próximo control para ese día (mismo tratamiento, **no se cobra de nuevo**). Recibirá el
   recordatorio el día anterior, como siempre.
 - **Todavía no sabe**: queda anotado que no vino y el paciente aparece en **Inicio → "No vinieron"**
-  con el botón **Escribirle**. Cuando le responda, entre a su ficha y toque **Agendar otro control**.
+  con el botón **Escribirle**. Después de escribirle, el botón cambia a **Poner fecha**: cuando el
+  paciente le diga qué día puede, tóquelo y elija el día. También puede hacerlo desde su ficha, donde
+  aparece arriba como **"Falta nueva fecha" → Poner nueva fecha**.
 
 Así ningún paciente se pierde. Si el paciente ya no seguirá el tratamiento, use **Cancelar control**.
 
