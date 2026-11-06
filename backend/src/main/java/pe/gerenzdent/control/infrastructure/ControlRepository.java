@@ -65,4 +65,25 @@ public interface ControlRepository extends JpaRepository<Control, UUID> {
       @Param("usuarioId") UUID usuarioId,
       @Param("hoy") LocalDate hoy,
       @Param("abiertos") Collection<EstadoControl> abiertos);
+
+  /**
+   * Controles marcados "no asistió" que siguen sin fecha nueva: es el último control de un plan
+   * activo, sin otro control posterior ni abierto, de un paciente activo. Siguen en "No vinieron"
+   * hasta que se les agende otro control.
+   */
+  @Query(
+      """
+      select c, pa from Control c join fetch c.plan p join fetch p.tratamiento,
+        Paciente pa
+      where pa.id = p.pacienteId and pa.usuarioId = :usuarioId and pa.archivado = false
+        and c.estado = pe.gerenzdent.control.domain.EstadoControl.NO_ASISTIO
+        and p.estado = pe.gerenzdent.control.domain.PlanTratamiento.Estado.ACTIVO
+        and not exists (
+          select 1 from Control otro
+          where otro.plan = p and otro.id <> c.id
+            and (otro.fecha >= c.fecha or otro.estado in :abiertos))
+      order by c.fecha, pa.nombreBusqueda
+      """)
+  List<Object[]> noVinieronSinFecha(
+      @Param("usuarioId") UUID usuarioId, @Param("abiertos") Collection<EstadoControl> abiertos);
 }

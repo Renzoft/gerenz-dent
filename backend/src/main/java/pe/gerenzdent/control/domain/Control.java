@@ -83,6 +83,17 @@ public class Control extends EntidadAuditable {
     }
   }
 
+  /**
+   * Seguimiento por WhatsApp enviado: en un control abierto es como un recordatorio; en uno que
+   * quedó como "no asistió" (sin fecha nueva todavía) solo se registra el envío.
+   */
+  public void registrarSeguimiento() {
+    if (estado == EstadoControl.NO_ASISTIO) {
+      return;
+    }
+    registrarRecordatorio();
+  }
+
   /** Cambia la fecha (y hora) y vuelve a PENDIENTE (HU-14). */
   public void reprogramar(LocalDate nuevaFecha, LocalTime nuevaHora, LocalDate hoy) {
     if (!estado.esAbierto()) {
@@ -99,8 +110,10 @@ public class Control extends EntidadAuditable {
     return estado.esAbierto() && fecha.isBefore(hoy);
   }
 
+  /** Días desde la fecha en que debía venir: si está vencido o si se marcó que no asistió. */
   public long diasDeAtraso(LocalDate hoy) {
-    return estaVencido(hoy) ? ChronoUnit.DAYS.between(fecha, hoy) : 0;
+    boolean noVino = estado == EstadoControl.NO_ASISTIO && fecha.isBefore(hoy);
+    return estaVencido(hoy) || noVino ? ChronoUnit.DAYS.between(fecha, hoy) : 0;
   }
 
   private void asignarFecha(LocalDate nuevaFecha, LocalTime nuevaHora, LocalDate hoy) {

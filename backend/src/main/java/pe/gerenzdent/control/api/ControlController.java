@@ -20,11 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 import pe.gerenzdent.control.api.ControlDtos.CambioEstadoRequest;
 import pe.gerenzdent.control.api.ControlDtos.CambioEstadoResponse;
 import pe.gerenzdent.control.api.ControlDtos.ControlResponse;
+import pe.gerenzdent.control.api.ControlDtos.NoVinoRequest;
+import pe.gerenzdent.control.api.ControlDtos.NoVinoResponse;
 import pe.gerenzdent.control.api.ControlDtos.NuevoControlRequest;
 import pe.gerenzdent.control.api.ControlDtos.ReprogramarRequest;
 import pe.gerenzdent.control.api.ControlDtos.SugerenciaResponse;
 import pe.gerenzdent.control.application.ControlService;
 import pe.gerenzdent.control.application.ControlService.CambioDeEstado;
+import pe.gerenzdent.control.application.ControlService.NoVino;
 import pe.gerenzdent.control.domain.Control;
 import pe.gerenzdent.shared.api.UsuarioAutenticado;
 
@@ -100,6 +103,23 @@ public class ControlController {
     return new CambioEstadoResponse(
         ControlResponse.de(cambio.control(), servicio.hoy()),
         cambio.siguienteFechaSugerida().orElse(null));
+  }
+
+  /**
+   * El paciente no vino. Con {@code fecha}, se agenda el siguiente control del mismo tratamiento en
+   * el mismo paso; sin fecha, queda en "No vinieron" para escribirle.
+   */
+  @PostMapping("/controles/{id}/no-vino")
+  public NoVinoResponse noVino(
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable UUID id,
+      @RequestBody(required = false) NoVinoRequest request) {
+    LocalDate hoy = servicio.hoy();
+    NoVinoRequest datos = request == null ? new NoVinoRequest(null, null) : request;
+    NoVino resultado = servicio.noVino(UsuarioAutenticado.id(jwt), id, datos.fecha(), datos.hora());
+    return new NoVinoResponse(
+        ControlResponse.de(resultado.cerrado(), hoy),
+        resultado.siguiente().map(c -> ControlResponse.de(c, hoy)).orElse(null));
   }
 
   /** Cambia la fecha y vuelve a pendiente (HU-14). */

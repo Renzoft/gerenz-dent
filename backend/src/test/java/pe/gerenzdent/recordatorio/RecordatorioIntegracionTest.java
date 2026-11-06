@@ -159,6 +159,95 @@ class RecordatorioIntegracionTest extends PruebaIntegracion {
     get("/api/v1/recordatorios/seguimientos").andExpect(jsonPath("$[0].enviado").value(true));
   }
 
+  private ResultActions noVino(String controlId, LocalDate fecha) throws Exception {
+    return mockMvc.perform(
+        post("/api/v1/controles/" + controlId + "/no-vino")
+            .header("Authorization", autorizacion)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(fecha == null ? "{}" : json("fecha", fecha.toString())));
+  }
+
+  private int contar(String tabla) {
+    return jdbc.queryForObject("SELECT count(*) FROM " + tabla, Integer.class);
+  }
+
+  @Test
+  void noVinoConFechaCierraElControlYAgendaElSiguienteDelMismoTratamiento() throws Exception {
+    String juan = crearPaciente("Juan", "987654321", true);
+    String control = agendar(juan, hoy, null);
+    int planes = contar("plan_tratamiento");
+    int cargos = contar("cargo");
+
+    String r =
+        noVino(control, hoy.plusDays(7))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.control.estado").value("NO_ASISTIO"))
+            .andExpect(jsonPath("$.siguiente.estado").value("PENDIENTE"))
+            .andExpect(jsonPath("$.siguiente.fecha").value(hoy.plusDays(7).toString()))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String planCerrado = JsonPath.read(r, "$.control.planId");
+    String planSiguiente = JsonPath.read(r, "$.siguiente.planId");
+    assertThat(planSiguiente).isEqualTo(planCerrado);
+    // Mismo tratamiento: ni plan nuevo ni cobros nuevos.
+    assertThat(contar("plan_tratamiento")).isEqualTo(planes);
+    assertThat(contar("cargo")).isEqualTo(cargos);
+    // Ya tiene fecha: no aparece en "No vinieron".
+    get("/api/v1/recordatorios/seguimientos").andExpect(jsonPath("$", hasSize(0)));
+  }
+
+  @Test
+  void noVinoSinFechaQuedaEnNoVinieronHastaQueSeLeAgendeOtroControl() throws Exception {
+    String juan = crearPaciente("Juan", "987654321", true);
+    String control = agendar(juan, hoy, null);
+    jdbc.update("UPDATE control SET fecha = ? WHERE id::text = ?", hoy.minusDays(2), control);
+
+    noVino(control, null)
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.control.estado").value("NO_ASISTIO"))
+        .andExpect(jsonPath("$.siguiente").doesNotExist());
+
+    get("/api/v1/recordatorios/seguimientos")
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].controlId").value(control))
+        .andExpect(jsonPath("$[0].estado").value("NO_ASISTIO"))
+        .andExpect(jsonPath("$[0].diasAtraso").value(2))
+        .andExpect(jsonPath("$[0].mensaje", containsString("Aún tiene pendiente su control")));
+
+    // Escribirle: se registra el envío sin reabrir el control.
+    registrar(control, "SEGUIMIENTO").andExpect(status().isCreated());
+    get("/api/v1/recordatorios/seguimientos")
+        .andExpect(jsonPath("$[0].enviado").value(true))
+        .andExpect(jsonPath("$[0].estado").value("NO_ASISTIO"));
+
+    // Al agendarle otro control del mismo tratamiento sale de la lista (mismo plan).
+    int planes = contar("plan_tratamiento");
+    agendar(juan, hoy.plusDays(5), null);
+    assertThat(contar("plan_tratamiento")).isEqualTo(planes);
+    get("/api/v1/recordatorios/seguimientos").andExpect(jsonPath("$", hasSize(0)));
+  }
+
+  @Test
+  void noSePuedeMarcarNoVinoDosVeces() throws Exception {
+    String juan = crearPaciente("Juan", "987654321", true);
+    String control = agendar(juan, hoy, null);
+
+    noVino(control, null).andExpect(status().isOk());
+    noVino(control, hoy.plusDays(3)).andExpect(status().isConflict());
+  }
+
+  @Test
+  void noVinoNoAceptaUnaFechaPasada() throws Exception {
+    String juan = crearPaciente("Juan", "987654321", true);
+    String control = agendar(juan, hoy, null);
+
+    noVino(control, hoy.minusDays(1)).andExpect(status().isBadRequest());
+    // Nada cambió: el control sigue abierto.
+    get("/api/v1/controles/" + control).andExpect(jsonPath("$.estado").value("PENDIENTE"));
+  }
+
   @Test
   void noSeRegistraEnvioDeUnControlCerrado() throws Exception {
     String juan = crearPaciente("Juan", "987654321", true);
