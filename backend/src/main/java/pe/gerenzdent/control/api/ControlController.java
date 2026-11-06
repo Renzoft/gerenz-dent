@@ -47,16 +47,20 @@ public class ControlController {
         .body(ControlResponse.de(control, servicio.hoy()));
   }
 
-  /** Controles abiertos entre dos fechas (por defecto, los próximos 7 días). */
+  /**
+   * Controles abiertos entre dos fechas (por defecto, los próximos 7 días). Con {@code
+   * cerrados=true} (calendario) incluye también los que asistieron o no vinieron.
+   */
   @GetMapping("/controles")
   public List<ControlResponse> agenda(
       @AuthenticationPrincipal Jwt jwt,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate desde,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate hasta) {
+          LocalDate hasta,
+      @RequestParam(defaultValue = "false") boolean cerrados) {
     LocalDate hoy = servicio.hoy();
-    return servicio.agenda(UsuarioAutenticado.id(jwt), desde, hasta).stream()
+    return servicio.agenda(UsuarioAutenticado.id(jwt), desde, hasta, cerrados).stream()
         .map(cp -> ControlResponse.de(cp, hoy))
         .toList();
   }

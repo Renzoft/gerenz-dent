@@ -1,6 +1,7 @@
 package pe.gerenzdent.control;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -226,6 +227,27 @@ class ControlIntegracionTest extends PruebaIntegracion {
     String manana = hoy.plusDays(1).toString();
     get("/api/v1/controles?desde=" + manana + "&hasta=" + manana)
         .andExpect(jsonPath("$", hasSize(2)));
+  }
+
+  @Test
+  void elCalendarioIncluyeLosQueAsistieronONoVinieronPeroNoLosCancelados() throws Exception {
+    String juan = crearPaciente("Juan", "987654321", null);
+    String ana = crearPaciente("Ana", "912345678", null);
+    String luis = crearPaciente("Luis", "923456789", null);
+    String asistio = agendarId(juan, brackets, hoy);
+    cambiarEstado(asistio, "ASISTIO").andExpect(status().isOk());
+    String cancelado = agendarId(ana, puente, hoy);
+    cambiarEstado(cancelado, "CANCELADO").andExpect(status().isOk());
+    agendarId(luis, puente, hoy);
+    String dia = hoy.toString();
+
+    get("/api/v1/controles?desde=" + dia + "&hasta=" + dia)
+        .andExpect(jsonPath("$[*].paciente.nombre", contains("Luis")));
+    get("/api/v1/controles?desde=" + dia + "&hasta=" + dia + "&cerrados=true")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(2)))
+        .andExpect(jsonPath("$[*].paciente.nombre", containsInAnyOrder("Juan", "Luis")))
+        .andExpect(jsonPath("$[?(@.paciente.nombre == 'Juan')].estado", contains("ASISTIO")));
   }
 
   @Test

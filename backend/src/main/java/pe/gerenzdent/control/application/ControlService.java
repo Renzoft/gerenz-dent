@@ -184,6 +184,16 @@ public class ControlService {
 
   @Transactional(readOnly = true)
   public List<ControlConPaciente> agenda(UUID usuarioId, LocalDate desde, LocalDate hasta) {
+    return agenda(usuarioId, desde, hasta, false);
+  }
+
+  /**
+   * Controles entre dos fechas. Con {@code conCerrados} (calendario) incluye también los que
+   * asistieron o no vinieron; los cancelados nunca.
+   */
+  @Transactional(readOnly = true)
+  public List<ControlConPaciente> agenda(
+      UUID usuarioId, LocalDate desde, LocalDate hasta, boolean conCerrados) {
     LocalDate inicio = desde == null ? calendario.hoy() : desde;
     LocalDate fin = hasta == null ? inicio.plusDays(7) : hasta;
     if (fin.isBefore(inicio)) {
@@ -192,7 +202,8 @@ public class ControlService {
     if (inicio.plusDays(DIAS_MAX_AGENDA).isBefore(fin)) {
       throw new DatoInvalido("hasta", "El rango máximo es de %d días.".formatted(DIAS_MAX_AGENDA));
     }
-    return conPaciente(controles.agenda(usuarioId, inicio, fin, EstadoControl.abiertos()));
+    var estados = conCerrados ? EstadoControl.paraCalendario() : EstadoControl.abiertos();
+    return conPaciente(controles.agenda(usuarioId, inicio, fin, estados));
   }
 
   @Transactional(readOnly = true)
