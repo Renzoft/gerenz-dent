@@ -280,6 +280,39 @@ void main() {
     expect(find.text('Juan Pérez'), findsOneWidget);
   });
 
+  testWidgets('cuando el servidor termina de despertar, recarga sola lo que '
+      'falló mientras tanto', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    when(
+      () => salud.servidorDisponible(),
+    ).thenAnswer((_) => Future.delayed(const Duration(seconds: 2), () => true));
+    var llamadas = 0;
+    when(() => controles.agenda()).thenAnswer((_) async {
+      llamadas++;
+      if (llamadas == 1) throw Exception('el servidor estaba dormido');
+      return [
+        controlPrueba(
+          id: 'c-hoy',
+          pacienteId: 'p-rosa',
+          paciente: paciente('Rosa Quispe'),
+          fecha: Fechas.hoy(),
+        ),
+      ];
+    });
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+    expect(find.text('Rosa Quispe'), findsNothing);
+
+    // El servidor responde: sin tocar "Reintentar", la agenda se vuelve a pedir.
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(llamadas, 2);
+    expect(find.text('Rosa Quispe'), findsOneWidget);
+  });
+
   testWidgets('"No vinieron" ofrece escribirles', (tester) async {
     when(() => recordatorios.seguimientos()).thenAnswer(
       (_) async => [
