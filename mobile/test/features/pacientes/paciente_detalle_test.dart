@@ -15,7 +15,7 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/fakes.dart';
 
-/// Ficha del paciente (rediseño v2, pantalla piloto). Datos ficticios.
+/// Ficha del paciente. Datos ficticios.
 void main() {
   late PacientesRepositoryFalso pacientes;
   late ControlesRepositoryFalso controles;

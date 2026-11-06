@@ -18,7 +18,7 @@ import '../../recordatorios/application/recordatorios_providers.dart';
 import '../../recordatorios/domain/mensaje_recordatorio.dart';
 import '../data/salud_repository.dart';
 
-/// Inicio (v2): la tarea del día primero y el resto como listas livianas.
+/// Inicio: la tarea del día primero y el resto como listas livianas.
 ///
 /// 1. Recordatorios de mañana: la tarea diaria, con el botón principal.
 /// 2. Hoy vienen.

@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 
 import 'tokens.dart';
 
-/// Tema de la app: sistema de diseño v2 (tokens.dart,
-/// docs/rediseno/02-sistema-de-diseno.md). Solo claro (sin modo oscuro).
+/// Tema de la app: sistema de diseño (tokens.dart,
+/// DESIGN.md). Solo claro (sin modo oscuro).
 abstract final class AppTheme {
   static final ThemeData claro = _construir();
 
   // -------------------------------------------------------------------------
-  // v2 (rediseño)
+  // Tema de la app
   // -------------------------------------------------------------------------
 
   static ThemeData _construir() {

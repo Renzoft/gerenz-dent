@@ -1,5 +1,5 @@
 ---
-name: GERENZ DENT · Consultorio claro (v2)
+name: GERENZ DENT · Consultorio claro
 description: Sistema de diseño de la app Android del consultorio. Código fuente en mobile/lib/core/theme/tokens.dart.
 colors:
   celeste-50: "#EFF9FD"
@@ -102,12 +102,10 @@ components:
     rounded: "{rounded.pildora}"
 ---
 
-# DESIGN.md · GERENZ DENT (v2, "Consultorio claro")
+# DESIGN.md · GERENZ DENT ("Consultorio claro")
 
 Fuente de verdad en código: `mobile/lib/core/theme/tokens.dart` (primitivos → semánticos → `Tono`),
-`app_theme.dart` (tema Material 3) y `mobile/lib/core/ui/componentes.dart`. Detalle y contraste:
-[docs/rediseno/02-sistema-de-diseno.md](docs/rediseno/02-sistema-de-diseno.md). Versión anterior:
-[docs/rediseno/DESIGN-v1.1.md](docs/rediseno/DESIGN-v1.1.md).
+`app_theme.dart` (tema Material 3) y `mobile/lib/core/ui/componentes.dart`.
 
 ## Overview
 

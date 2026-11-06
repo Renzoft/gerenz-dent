@@ -1,8 +1,8 @@
 import 'package:flutter/animation.dart';
 
-/// Sistema de diseño de GERENZ DENT (v2, rediseño 2026).
+/// Sistema de diseño de GERENZ DENT ("Consultorio claro", ver DESIGN.md).
 ///
-/// Tres capas, documentadas en docs/rediseno/02-sistema-de-diseno.md:
+/// Tres capas, documentadas en DESIGN.md:
 /// 1. [Primitivos]: escalas derivadas de los 3 colores de marca
 ///    (celeste #3BB5E8, blanco, verde #22B573) + 2 funcionales aprobados.
 /// 2. [Tokens]: colores por propósito (texto, superficie, acción…).
