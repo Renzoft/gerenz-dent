@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/agenda/presentation/agenda_page.dart';
 import '../../features/ajustes/presentation/ajustes_page.dart';
 import '../../features/auth/application/auth_controller.dart';
 import '../../features/auth/presentation/login_page.dart';
@@ -20,6 +21,7 @@ abstract final class Rutas {
   static const cargando = '/cargando';
   static const login = '/login';
   static const inicio = '/';
+  static const agenda = '/agenda';
   static const pacientes = '/pacientes';
   static const pacienteNuevo = '/pacientes/nuevo';
   static const deudas = '/deudas';
@@ -141,6 +143,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: Rutas.inicio,
                 builder: (context, state) => const InicioPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Rutas.agenda,
+                builder: (context, state) => const AgendaPage(),
               ),
             ],
           ),

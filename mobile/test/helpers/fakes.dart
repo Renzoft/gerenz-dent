@@ -101,8 +101,10 @@ Control controlPrueba({
   int diasAtraso = 0,
   PacienteDelControl? paciente,
   String? planId,
+  TimeOfDay? hora,
 }) => Control(
   id: id,
+  hora: hora,
   planId: planId,
   pacienteId: pacienteId,
   fecha: fecha ?? Fechas.hoy(),

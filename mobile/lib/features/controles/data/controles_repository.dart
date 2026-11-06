@@ -51,11 +51,17 @@ class ControlesRepository {
   Future<List<Control>> historial(String pacienteId) =>
       _lista('/api/v1/pacientes/$pacienteId/controles');
 
-  Future<List<Control>> agenda({DateTime? desde, DateTime? hasta}) =>
-      _lista('/api/v1/controles', {
-        if (desde != null) 'desde': Fechas.aIso(desde),
-        if (hasta != null) 'hasta': Fechas.aIso(hasta),
-      });
+  /// Con [cerrados] (calendario) también trae los que asistieron o no
+  /// vinieron; los cancelados nunca.
+  Future<List<Control>> agenda({
+    DateTime? desde,
+    DateTime? hasta,
+    bool cerrados = false,
+  }) => _lista('/api/v1/controles', {
+    if (desde != null) 'desde': Fechas.aIso(desde),
+    if (hasta != null) 'hasta': Fechas.aIso(hasta),
+    if (cerrados) 'cerrados': 'true',
+  });
 
   Future<List<Control>> vencidos() => _lista('/api/v1/controles/vencidos');
 
