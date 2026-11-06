@@ -196,7 +196,26 @@ public class ControlService {
   @Transactional
   public Control reprogramar(UUID usuarioId, UUID controlId, LocalDate fecha, LocalTime hora) {
     Control control = obtener(usuarioId, controlId);
-    control.reprogramar(fecha, hora, calendario.hoy());
+    LocalDate hoy = calendario.hoy();
+    if (control.getEstado() == EstadoControl.NO_ASISTIO) {
+      // "Poner fecha" a un paciente que no vino: el "no vino" queda en el historial y se agenda
+      // el siguiente control del mismo plan (sin cobros nuevos).
+      PlanTratamiento plan = control.getPlan();
+      controles
+          .abiertoDelPlan(plan.getId(), EstadoControl.abiertos())
+          .ifPresent(existente -> {
+            throw new Conflicto(
+                "Ya tiene un control de %s pendiente para el %s."
+                    .formatted(
+                        plan.getTratamiento().getNombre(),
+                        FECHA_CORTA.format(existente.getFecha())),
+                Map.of(
+                    "controlExistenteId", existente.getId(),
+                    "fechaExistente", existente.getFecha().toString()));
+          });
+      return controles.saveAndFlush(new Control(plan, fecha, hora, null, hoy));
+    }
+    control.reprogramar(fecha, hora, hoy);
     return controles.saveAndFlush(control);
   }
 
